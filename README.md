@@ -3,6 +3,8 @@
 Currently there are 2 utilities for managing the BlueSCSI V2 SCSI emulator in a Commodore Amiga.
 For more information on BlueSCSI please see https://github.com/BlueSCSI/BlueSCSI-v2
 
+BlueSCSI is copyright Eric Helgeson. The BlueSCSI name and logo used with permission.
+
 You can select the device/unit from the properties of the icon.  Optionally you can specify these on the command line.
 
 ## CD Changer
