@@ -1,12 +1,17 @@
-This is my BlueSCSI toolbox for the Commodore Amiga.
+# BlueSCSI tools for the Commodore Amiga.
 
-Currently there are 2 tools.
+There are currently 2 tools for managing the BlueSCSI V2 SCSI emulator in a Commodore Amiga.
+For more information on BlueSCSI please see https://github.com/BlueSCSI/BlueSCSI-v2
 
-**CD Changer** 
-This allows you to swap CD ISO images on the fly
+## CD Changer
+The CD Changer allows you to swap between CD ISO images on your SD card on the fly.
 
 ![CD Changer](CDChanger.png)
 
-**SDTransfer**
+## SD Transfer
 [Image]
-This allows you to transfer files from the SD card to the Amiga.
+The SD Transfer tool allows you to transfer files from the SD card to the Amiga.
+
+**Known Issues**
+* Currently on my Amiga 4000 with a cyberscsi device the SD Transfer will crash the scsi device if you do not have a CD SCSI device.
+
