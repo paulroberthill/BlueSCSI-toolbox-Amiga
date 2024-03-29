@@ -9,8 +9,9 @@ The CD Changer allows you to swap between CD ISO images on your SD card on the f
 ![CD Changer](CDChanger.png)
 
 ## SD Transfer
-[Image]
 The SD Transfer tool allows you to transfer files from the SD card to the Amiga.
+
+![CD Changer](SDTransfer.png)
 
 **Known Issues**
 * Currently on my Amiga 4000 with a cyberscsi device the SD Transfer will crash the scsi device if you do not have a CD SCSI device.
