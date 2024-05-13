@@ -40,7 +40,8 @@
 #include <workbench/startup.h>
 #include "toolbox.h"
 
-// TODO: ADD COMMAND LINE USAGE!!!
+// TODO: Add command line usage
+static const char ver[] = "$VER: CDChanger 1.1 (13.5.2024)";
 
 void GetVolumeName();
 void DiskChange();

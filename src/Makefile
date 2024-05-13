@@ -1,6 +1,7 @@
 OBJS	 = BlueSCSIToolbox.o CDChanger.o BlueSCSIlogo.o Test.o scsi.o SDTransfer.o
 CC	     = vc
-CFLAGS   = +aos68k "-ID:\Amiga\Include_H" -O2 -sc -c99 -cpu=68020 -DDEBUG
+CFLAGS   = +aos68k "-ID:\Amiga\Include_H" -O2 -sc -c99 -cpu=68020
+# -DDEBUG
 LFLAGS	 = -lamiga -ldebug
 
 all: BlueSCSIToolbox CDChanger SDTransfer
@@ -34,3 +35,14 @@ BlueSCSIlogo.o: BlueSCSIlogo.c
 
 clean:
 	del -f $(OBJS) BlueSCSIToolbox CDChanger
+
+release:
+	del /q ..\dist\*.*
+	copy CDChanger ..\dist
+	copy CDChanger.info ..\dist
+	copy SDTransfer ..\dist
+	copy SDTransfer.info ..\dist
+	copy LICENSE.txt ..\dist
+	copy BlueSCSIToolbox ..\dist
+
+	

@@ -25,7 +25,7 @@
 
 #define BLUESCSI_TOOLBOX_COUNT_FILES 0xD2
 #define BLUESCSI_TOOLBOX_LIST_FILES 0xD0
-#define BLUESCSI_TOOLBOX_GETFILE 0xD1
+#define BLUESCSI_TOOLBOX_GET_FILE 0xD1
 #define BLUESCSI_TOOLBOX_SEND_FILE_PREP 0xD3
 #define BLUESCSI_TOOLBOX_SEND_FILE_10 0xD4
 #define BLUESCSI_TOOLBOX_SEND_FILE_END 0xD5
@@ -39,6 +39,8 @@
 
 // from BlueSCSI_Toolbox.cpp
 #define MAX_MAC_PATH 32
+
+static const char ver[] = "$VER: BlueSCSIToolbox 1.1 (13.5.2024)";
 
 int Toolbox_List_Files(int cdrom);
 int Toolbox_List_Devices();
@@ -383,7 +385,7 @@ void Toolbox_Show_files()
    First CD is 1 */
 void Toolbox_Next_CD(int index)
 {
-   UBYTE command[] = {BLUESCSI_TOOLBOX_SET_NEXT_CD, 0, 0, 0, 0, 0};
+   UBYTE command[] = {BLUESCSI_TOOLBOX_SET_NEXT_CD, 0, 0, 0, 0, 0, 0, 0, 0, 0};
    command[1] = index - 1;
    int err;
    if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
@@ -398,7 +400,7 @@ void Toolbox_Next_CD(int index)
 /* Count the number of files/CD rom images */
 int Toolbox_Count_Files(int cdrom)
 {
-   UBYTE command[] = {BLUESCSI_TOOLBOX_COUNT_FILES, 0, 0, 0, 0, 0};
+   UBYTE command[] = {BLUESCSI_TOOLBOX_COUNT_FILES, 0, 0, 0, 0, 0, 0, 0, 0, 0};
    if (cdrom)
    {
       command[0] = BLUESCSI_TOOLBOX_COUNT_CDS;
@@ -433,7 +435,7 @@ int Toolbox_Count_Files(int cdrom)
 int Toolbox_List_Devices()
 {
    // 0xD9 BLUESCSI_TOOLBOX_LIST_DEVICES
-   UBYTE command[] = {BLUESCSI_TOOLBOX_LIST_DEVICES, 0, 0, 0, 0, 0};
+   UBYTE command[] = {BLUESCSI_TOOLBOX_LIST_DEVICES, 0, 0, 0, 0, 0, 0, 0, 0, 0};
    int err;
    
    if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
@@ -471,7 +473,7 @@ int Toolbox_List_Files(int cdrom)
    // Update the file count
    Toolbox_Count_Files(cdrom);
 
-   UBYTE command[] = {BLUESCSI_TOOLBOX_LIST_FILES, 0, 0, 0, 0, 0};
+   UBYTE command[] = {BLUESCSI_TOOLBOX_LIST_FILES, 0, 0, 0, 0, 0, 0, 0, 0, 0};
    if (cdrom)
    {
       command[0] = BLUESCSI_TOOLBOX_LIST_CDS;
@@ -529,7 +531,7 @@ int Toolbox_GetFileByName(char *destination, char *source)
    if (index >= 0)
    {
       int offset = 0; // offset in 4096 size pages
-      UBYTE command[] = {BLUESCSI_TOOLBOX_GETFILE, 0, 0, 0, 0, 0};
+      UBYTE command[] = {BLUESCSI_TOOLBOX_GET_FILE, 0, 0, 0, 0, 0, 0, 0, 0, 0};
       command[1] = index;
 
       BPTR fh = Open(destination, MODE_NEWFILE);
@@ -585,7 +587,7 @@ int Toolbox_PutFileByName(char *destination, char *source)
    int err;
    int count = 0;
 
-   UBYTE command[] = {BLUESCSI_TOOLBOX_SEND_FILE_PREP, 0, 0, 0, 0, 0};
+   UBYTE command[] = {BLUESCSI_TOOLBOX_SEND_FILE_PREP, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
    char *name = destination;
    int i = 0;
@@ -653,7 +655,7 @@ int Toolbox_PutFileByName(char *destination, char *source)
 /* Enable/Disable BlueSCSI debug */
 void Toolbox_Debug(debugon)
 {
-   UBYTE command[] = {BLUESCSI_TOOLBOX_TOGGLE_DEBUG, 0, 0, 0, 0, 0};
+   UBYTE command[] = {BLUESCSI_TOOLBOX_TOGGLE_DEBUG, 0, 0, 0, 0, 0, 0, 0, 0, 0};
    command[1] = debugon;
    int err;
    int count = 0;
@@ -689,9 +691,14 @@ int DoScsiCmd(UBYTE *data, int datasize, UBYTE *cmd, int cmdsize, UBYTE flags)
    scsi_cmd->scsi_Command = cmd;
    scsi_cmd->scsi_CmdLength = cmdsize;
    scsi_cmd->scsi_Flags = flags;
-dump("\nCalling DoIO", cmd, cmdsize);
+#if DEBUG
+   dump("\nCalling DoIO", cmd, cmdsize);
+#endif
    DoIO((struct IORequest *)io_ptr);
-Printf("io_Error=%lx\n", io_ptr->io_Error);
+
+#if DEBUG
+   Printf("io_Error=%lx\n", io_ptr->io_Error);
+#endif
    return (io_ptr->io_Error);
 }
 

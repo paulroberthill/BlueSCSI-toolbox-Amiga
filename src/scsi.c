@@ -133,7 +133,7 @@ int Toolbox_InitDevice()
    {
       scsi_isCD = (scsi_data[0] & 0x1F) ? 0x05 : 0x00;
       scsi_isRemovable = (scsi_data[1] & 0x80) ? 1 : 0;
-      scsi_isBlueSCSI = (scsi_isRemovable == 1) && Strnicmp("BlueSCSI", &scsi_data[8], 8) == 0;
+      scsi_isBlueSCSI = (scsi_isRemovable == 1) && Strnicmp("BlueSCSI", &scsi_data[8], 8) == 0; //!
    }
 #endif
    return err;
@@ -142,7 +142,7 @@ int Toolbox_InitDevice()
 /* Execute BLUESCSI_TOOLBOX_COUNT_CDS / BLUESCSI_TOOLBOX_COUNT_FILES */
 int Toolbox_Count_Files(int cdrom)
 {
-   UBYTE command[] = {BLUESCSI_TOOLBOX_COUNT_FILES, 0, 0, 0, 0, 0};
+   UBYTE command[] = {BLUESCSI_TOOLBOX_COUNT_FILES, 0, 0, 0, 0, 0, 0, 0, 0, 0};
    int err;
    int count = 0;
    if (cdrom)
@@ -213,7 +213,7 @@ struct FileEntry *Toolbox_List_Files(int cdrom)
    {
       files = (struct FileEntry *)AllocMem(sizeof(struct FileEntry) * (filecount + 1), MEMF_CLEAR);
       struct FileEntry *file = files;
-      UBYTE command[] = {BLUESCSI_TOOLBOX_LIST_FILES, 0, 0, 0, 0, 0};
+      UBYTE command[] = {BLUESCSI_TOOLBOX_LIST_FILES, 0, 0, 0, 0, 0, 0, 0, 0, 0};
       if (cdrom)
       {
          command[0] = BLUESCSI_TOOLBOX_LIST_CDS;
@@ -224,7 +224,7 @@ struct FileEntry *Toolbox_List_Files(int cdrom)
                            (UBYTE *)&command, sizeof(command),
                            (SCSIF_READ | SCSIF_AUTOSENSE))) != 0)
       {
-         MessageBox("Toolbox_List_Files", "SCSI error\n");
+         MessageBox("Toolbox_Count_Files", "SCSI error\n");
          return NULL;
       }
 
@@ -254,7 +254,7 @@ struct FileEntry *Toolbox_List_Files(int cdrom)
 /* Select a CD image */
 void Toolbox_Set_Next_CD(UBYTE index)
 {
-   UBYTE command[] = {BLUESCSI_TOOLBOX_SET_NEXT_CD, 0, 0, 0, 0, 0};
+   UBYTE command[] = {BLUESCSI_TOOLBOX_SET_NEXT_CD, 0, 0, 0, 0, 0, 0, 0, 0, 0};
    command[1] = (UBYTE) index;
    int err;
    if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
@@ -291,7 +291,7 @@ int Toolbox_Download(char *source, char *destination, void (*callback)(int))
          int offset = 0; // offset in 4096 size pages
          int size = file->Size;
 
-         UBYTE command[] = {BLUESCSI_TOOLBOX_GETFILE, 0, 0, 0, 0, 0};
+         UBYTE command[] = {BLUESCSI_TOOLBOX_GET_FILE, 0, 0, 0, 0, 0, 0, 0, 0, 0};
          command[1] = index;
 
          BPTR fh = Open(destination, MODE_NEWFILE);

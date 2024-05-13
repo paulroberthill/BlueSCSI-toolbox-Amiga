@@ -42,6 +42,8 @@
 #include <workbench/startup.h>
 #include "toolbox.h"
 
+static const char ver[] = "$VER: SDTransfer 1.1 (13.5.2024)";
+
 void FreeListBrowserNodes();
 BOOL AddListBrowserNode(ULONG index, STRPTR filename);
 void progress(int pc);
