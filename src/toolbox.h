@@ -48,6 +48,7 @@ void Toolbox_Set_Next_CD(UBYTE index);
 void scsi_cleanup();
 int Toolbox_Download(char *source, char *destination, void (*callback)(int));
 int scsi_setup(char *scsi_dev, int scsi_unit);
+extern int scsi_isBlueSCSI, scsi_isZuluSCSI;
 
 // toolbox.c
 void MessageBox(char *title, char *body);

@@ -80,12 +80,13 @@ struct ColumnInfo gb_ListbrowserColumn[] =
    {  -1, (STRPTR)~0, (ULONG)-1 }
 };
 
-extern UWORD logo_data[];
+extern UWORD bluescsi_logo_data[];
+extern UWORD zuluscsi_logo_data[];
 struct Image logo_image =
 {
     0, 0,             // LeftEdge, TopEdge
     192, 71, 1,        // Width, Height, Depth
-    logo_data,        // ImageData
+    NULL,        // ImageData
     0x0001, 0x0000,   // PlanePick, PlaneOnOff
     NULL              // NextImage
 };
@@ -223,6 +224,12 @@ int main(int argc, char **argv)
    if (scsi_setup(scsi_dev, scsi_unit) != 0)
    {
       goto exit;
+   }
+
+   if (scsi_isZuluSCSI) {
+      logo_image.ImageData = zuluscsi_logo_data;
+   } else {
+      logo_image.ImageData = bluescsi_logo_data;
    }
 
    NewList(&gb_List);

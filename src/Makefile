@@ -1,4 +1,4 @@
-OBJS	 = BlueSCSIToolbox.o CDChanger.o BlueSCSIlogo.o Test.o scsi.o SDTransfer.o
+OBJS	 = BlueSCSIToolbox.o CDChanger.o BlueSCSIlogo.o ZuluSCSIlogo.o Test.o scsi.o SDTransfer.o
 CC	     = vc
 CFLAGS   = +aos68k "-ID:\Amiga\Include_H" -O2 -sc -c99 -cpu=68020
 # -DDEBUG
@@ -12,16 +12,16 @@ BlueSCSIToolbox: BlueSCSIToolbox.o
 BlueSCSIToolbox.o: BlueSCSIToolbox.c
 	$(CC) $(CFLAGS) -c BlueSCSIToolbox.c
 
-CDChanger: CDChanger.o BlueSCSIlogo.o scsi.o common.o
-	$(CC) +aos68k CDChanger.o -o CDChanger $(LFLAGS) BlueSCSIlogo.o scsi.o common.o
+CDChanger: CDChanger.o BlueSCSIlogo.o ZuluSCSIlogo.o scsi.o common.o
+	$(CC) +aos68k CDChanger.o -o CDChanger $(LFLAGS) BlueSCSIlogo.o ZuluSCSIlogo.o scsi.o common.o
 
-CDChanger.o: CDChanger.c BlueSCSIlogo.c toolbox.h
+CDChanger.o: CDChanger.c BlueSCSIlogo.c ZuluSCSIlogo.c toolbox.h
 	$(CC) $(CFLAGS) -c CDChanger.c
 
-SDTransfer: SDTransfer.o BlueSCSIlogo.o scsi.o common.o
-	$(CC) +aos68k SDTransfer.o -o SDTransfer $(LFLAGS) BlueSCSIlogo.o scsi.o common.o
+SDTransfer: SDTransfer.o BlueSCSIlogo.o ZuluSCSIlogo.o scsi.o common.o
+	$(CC) +aos68k SDTransfer.o -o SDTransfer $(LFLAGS) BlueSCSIlogo.o ZuluSCSIlogo.o scsi.o common.o
 
-SDTransfer.o: SDTransfer.c BlueSCSIlogo.c toolbox.h
+SDTransfer.o: SDTransfer.c BlueSCSIlogo.c ZuluSCSIlogo.c toolbox.h
 	$(CC) $(CFLAGS) -c SDTransfer.c
 
 scsi.o: scsi.c toolbox.h
@@ -32,6 +32,9 @@ common.o: common.c toolbox.h
 
 BlueSCSIlogo.o: BlueSCSIlogo.c
 	$(CC) $(CFLAGS) -c BlueSCSIlogo.c
+
+ZuluSCSIlogo.o: ZuluSCSIlogo.c
+	$(CC) $(CFLAGS) -c ZuluSCSIlogo.c
 
 clean:
 	del -f $(OBJS) BlueSCSIToolbox CDChanger
@@ -45,4 +48,3 @@ release:
 	copy LICENSE.txt ..\dist
 	copy BlueSCSIToolbox ..\dist
 
-	

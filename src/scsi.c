@@ -32,6 +32,7 @@ UBYTE *scsi_data;
 
 int scsi_isCD;
 int scsi_isBlueSCSI;
+int scsi_isZuluSCSI;
 int scsi_isRemovable;
 
 struct FileEntry *files = NULL; 
@@ -118,6 +119,7 @@ int Toolbox_InitDevice()
 #ifdef TESTMODE
    scsi_isCD = 1;
    scsi_isBlueSCSI = 1;
+   scsi_isZuluSCSI = 0;
    scsi_isRemovable = 1;
 #else
    UBYTE command[] = {SCSI_CMD_INQ, 0, 0, 0, 252, 0};
@@ -134,6 +136,7 @@ int Toolbox_InitDevice()
       scsi_isCD = (scsi_data[0] & 0x1F) ? 0x05 : 0x00;
       scsi_isRemovable = (scsi_data[1] & 0x80) ? 1 : 0;
       scsi_isBlueSCSI = (scsi_isRemovable == 1) && Strnicmp("BlueSCSI", &scsi_data[8], 8) == 0; //!
+      scsi_isZuluSCSI = (scsi_isRemovable == 1) && Strnicmp("ZuluSCSI", &scsi_data[8], 8) == 0; //!
    }
 #endif
    return err;
