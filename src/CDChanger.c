@@ -41,7 +41,7 @@
 #include "toolbox.h"
 
 // TODO: Add command line usage
-static const char ver[] = "$VER: CDChanger 1.1 (13.5.2024)";
+static const char ver[] = "$VER: CDChanger 1.2 (18.5.2024)";
 
 void GetVolumeName();
 void DiskChange();

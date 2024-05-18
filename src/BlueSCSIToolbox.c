@@ -40,7 +40,7 @@
 // from BlueSCSI_Toolbox.cpp
 #define MAX_MAC_PATH 32
 
-static const char ver[] = "$VER: BlueSCSIToolbox 1.1 (13.5.2024)";
+static const char ver[] = "$VER: BlueSCSIToolbox 1.2 (18.5.2024)";
 
 int Toolbox_List_Files(int cdrom);
 int Toolbox_List_Devices();

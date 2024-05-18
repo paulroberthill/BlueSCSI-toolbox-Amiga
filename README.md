@@ -1,9 +1,6 @@
 # BlueSCSI tools for the Commodore Amiga.
 
-Currently there are 2 utilities for managing a BlueSCSI V2 in a Commodore Amiga.
-For more information on BlueSCSI please see https://github.com/BlueSCSI/BlueSCSI-v2
-
-BlueSCSI is copyright Eric Helgeson. The BlueSCSI name and logo used with permission.
+2 utilities for managing a [BlueSCSI V2](https://github.com/BlueSCSI/BlueSCSI-v2/) or [ZuluSCSI](https://zuluscsi.com/) in a Commodore Amiga. 
 
 You can select the device/unit from the properties of the icon.
 Optionally you can specify these on the command line.
@@ -11,7 +8,7 @@ Optionally you can specify these on the command line.
 ## CD Changer
 The CD Changer allows you to swap between CD ISO images on your SD card on the fly.
 
-![CD Changer](CDChanger.png)
+![CD Changer](CDChanger.png) ![CD Changer ZuluSCSI](CDChanger_ZuluSCSI.png)
 
 ## SD Transfer
 The SD Transfer tool allows you to transfer files from the SD card to the Amiga.
@@ -19,5 +16,8 @@ The SD Transfer tool allows you to transfer files from the SD card to the Amiga.
 ![CD Changer](SDTransfer.png)
 
 **History**
-* 1.1 (13.5.2024)
-- As per the Toolbox Developer Docs corrected the Command Descriptor Block length from 6 to 10. I believe this was causing the SCSI stack crashes I was seeing when selecting a non-BlueSCSI device.
+* 1.1 (13.05.2024) SCSI Command Descriptor length should be 10 bytes, not 6 as per the Toolbox Developer Docs. Corrected. This may have been causing the SCSI stack to crash when selecting a non-BlueSCSI device.
+* 1.2 (18.05.2024)
+Thanks to Stefan Reinauer for adding support for the ZuluSCSI! (https://zuluscsi.com/)
+
+BlueSCSI is copyright Eric Helgeson. The BlueSCSI name and logo used with permission.
