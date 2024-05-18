@@ -68,6 +68,7 @@ struct Library *UtilityBase = NULL;
 LONG scsi_removable;
 LONG scsi_isCD;
 LONG scsi_isBlueSCSI;
+LONG scsi_isZuluSCSI;
 
 UBYTE scsi_dev[1024];
 LONG scsi_id = 0;
@@ -225,9 +226,9 @@ int main(int argc, char* argv[])
       PutStr("Error sending inquiry to device\n");
       goto exit;
    }
-   if (!scsi_isBlueSCSI)
+   if (!scsi_isBlueSCSI && !scsi_isZuluSCSI)
    {
-      PutStr("Not a BlueSCSI device\n");
+      PutStr("Not a BlueSCSI or ZuluSCSI device\n");
       goto exit;
    }
 
@@ -354,6 +355,7 @@ int BlueSCSI_InitDevice()
       scsi_removable = (scsi_data[1] & 0x80) ? 1 : 0;
       scsi_isCD = (scsi_data[0] & 0x1F) ? 0x05 : 0x00;
       scsi_isBlueSCSI = Strnicmp("BlueSCSI", &scsi_data[8], 8) == 0;
+      scsi_isZuluSCSI = Strnicmp("ZuluSCSI", &scsi_data[8], 8) == 0;
    }
    return 0;
 }
