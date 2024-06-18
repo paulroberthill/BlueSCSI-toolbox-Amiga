@@ -45,6 +45,6 @@ release:
 	copy CDChanger.info ..\dist
 	copy SDTransfer ..\dist
 	copy SDTransfer.info ..\dist
-	copy LICENSE.txt ..\dist
+	copy ..\LICENSE.txt ..\dist
 	copy BlueSCSIToolbox ..\dist
 

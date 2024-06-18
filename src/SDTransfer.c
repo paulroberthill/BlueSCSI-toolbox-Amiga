@@ -105,19 +105,19 @@ int main(int argc, char **argv)
       PutStr("Could not open intuition.library\n");
       goto exit;
    }
-   if ((WindowBase = OpenLibrary("window.class", 44)) == NULL)
+   if ((WindowBase = OpenLibrary("window.class", 0)) == NULL)
    {
-      PutStr("Could not open window.class\n");
+      MessageBox(appname, "Could not open window.class\n");
       goto exit;
    }
    if ((UtilityBase = OpenLibrary("utility.library", 37L)) == NULL)
    {
-      PutStr("Could not open utility.library\n");
+      MessageBox(appname, "Could not open utility.library\n");
       goto exit;
    }
    if ((AslBase = OpenLibrary("asl.library", 44L)) == NULL)
    {
-      PutStr("Could not open asl.library\n");
+      MessageBox(appname, "Could not open asl.library\n");
       goto exit;
    }
    if ((ListBrowserBase = OpenLibrary("gadgets/listbrowser.gadget", 44)) == NULL)
@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 
                if(s=(STRPTR)FindToolType(toolarray,"DEVICE"))
                {
-                  Strncpy(scsi_dev, s, sizeof(scsi_dev));
+                  strncpy(scsi_dev, s, sizeof(scsi_dev));
                }
                if(s=(STRPTR)FindToolType(toolarray,"UNIT"))
                {
@@ -198,7 +198,7 @@ int main(int argc, char **argv)
       {
          if (params[DEVICE])
          {
-            Strncpy(scsi_dev, (UBYTE *)params[DEVICE], sizeof(scsi_dev));
+            strncpy(scsi_dev, (UBYTE *)params[DEVICE], sizeof(scsi_dev));
          }
          if (params[UNIT])
          {
@@ -502,7 +502,7 @@ void FreeListBrowserNodes()
 void bstrcpy(char *dest, UBYTE *src)
 {
    int len = *src++;
-   Strncpy(dest, src, len + 1);
+   strncpy(dest, src, len + 1);
    dest[len] = 0;
 }
 

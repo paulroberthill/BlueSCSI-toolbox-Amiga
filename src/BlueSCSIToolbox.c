@@ -22,6 +22,7 @@
 #include <proto/expansion.h>
 #include <proto/utility.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define BLUESCSI_TOOLBOX_COUNT_FILES 0xD2
 #define BLUESCSI_TOOLBOX_LIST_FILES 0xD0
@@ -134,11 +135,11 @@ int main(int argc, char* argv[])
    {
       if (params[DEVICE])
       {
-         Strncpy(scsi_dev, (char *)params[0], sizeof(scsi_dev));
+         strncpy(scsi_dev, (char *)params[DEVICE], sizeof(scsi_dev));
       }
       if (params[UNIT])
       {
-         scsi_id = (*((LONG *)params[1]));
+         scsi_id = (*((LONG *)params[UNIT]));
       }
       if (params[DIR])
       {
@@ -147,12 +148,12 @@ int main(int argc, char* argv[])
       if (params[SEND])
       {
          toolboxCommand = TOOLBOX_SEND;
-         Strncpy(filename, (char *)params[SEND], 256);
+         strncpy(filename, (char *)params[SEND], 256);
       }
       if (params[RECEIVE])
       {
          toolboxCommand = TOOLBOX_RECEIVE;
-         Strncpy(filename, (char *)params[RECEIVE], 256);
+         strncpy(filename, (char *)params[RECEIVE], 256);
       }
       if (params[LISTDEVICES])
       {
@@ -219,7 +220,7 @@ int main(int argc, char* argv[])
       PutStr("AllocMem scsi_data failed\n");
       goto exit;
    }
-   
+
    // Init the device and read some flags
    if (BlueSCSI_InitDevice())
    {
@@ -330,7 +331,7 @@ void DiskChange()
 
    if (found)
    {
-      Strncat(drive, ":", 256); 
+      strncat(drive, ":", 256); 
       Inhibit(drive, DOSTRUE);
       Inhibit(drive, DOSFALSE);
    }   
@@ -364,7 +365,7 @@ int BlueSCSI_InitDevice()
 void bstrcpy(char *dest, UBYTE *src)
 {
    int len = *src++;
-   Strncpy(dest, src, len + 1);
+   strncpy(dest, src, len + 1);
    dest[len] = 0;
 }
 
@@ -499,7 +500,7 @@ int Toolbox_List_Files(int cdrom)
          file->Index = (int)*c++;
          file->Type = (int)*c++; // 1=file 0=dir
 
-         Strncpy(file->Name, c, 32);
+         strncpy(file->Name, c, 32);
 
          c += MAX_MAC_PATH + 2;
          unsigned int size = c[0] << 24 | c[1] << 16 | c[2] << 8 | c[3];
