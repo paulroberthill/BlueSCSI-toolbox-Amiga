@@ -19,5 +19,6 @@ The SD Transfer tool allows you to transfer files from the SD card to the Amiga.
 * 1.1 (13.05.2024) SCSI Command Descriptor length should be 10 bytes, not 6 as per the Toolbox Developer Docs. Corrected. This may have been causing the SCSI stack to crash when selecting a non-BlueSCSI device.
 * 1.2 (18.05.2024)
 Thanks to Stefan Reinauer for adding support for the ZuluSCSI! (https://zuluscsi.com/)
+* 1.2c (18.06.2024) Removed some OS3.2 utility.library functions so older OS versions are suported. Strncpy => strncpy, Strncat => strncat.
 
 BlueSCSI is copyright Eric Helgeson. The BlueSCSI name and logo used with permission.
