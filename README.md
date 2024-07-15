@@ -5,6 +5,8 @@
 You can select the device/unit from the properties of the icon.
 Optionally you can specify these on the command line.
 
+Please note that for ZuluSCSI you need to enable the toolbox option. In the INI file (base of the SD card, zuluscsi.ini) make sure you have EnableToolbox=1 listed under the [SCSI] section.
+
 ## CD Changer
 The CD Changer allows you to swap between CD ISO images on your SD card on the fly.
 
