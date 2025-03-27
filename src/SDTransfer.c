@@ -486,7 +486,7 @@ BOOL AddListBrowserNode(ULONG index, STRPTR filename)
   {
     AddTail(&gb_List,node);
   }
-  return( node ? TRUE : FALSE );
+  return (BOOL)( node ? TRUE : FALSE );
 }
 
 /* Free the browser nodes */

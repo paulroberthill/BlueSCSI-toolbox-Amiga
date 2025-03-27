@@ -451,7 +451,7 @@ BOOL AddListBrowserNode(ULONG index, STRPTR number, STRPTR text)
        selectedNode = node;
     }
   }
-  return( node ? TRUE : FALSE );
+  return (BOOL)( node ? TRUE : FALSE );
 }
 
 /* Free the browser nodes */
