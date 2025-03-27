@@ -98,6 +98,9 @@ int main(int argc, char **argv)
 {
    struct RDArgs *rd;
    LONG params[] = {0, 0};
+   struct FileEntry *files;
+   char scsi_msg[50];
+   APTR windowObj;
    Object *listBrowser;
 
    if ((IntuitionBase = (struct IntuitionBase *) OpenLibrary("intuition.library", 33L)) == NULL)
@@ -152,9 +155,10 @@ int main(int argc, char **argv)
       {
          struct WBStartup *WBenchMsg = (struct WBStartup *)argv;
          struct WBArg *wbarg;
+         LONG i;
 
          wbarg = WBenchMsg->sm_ArgList;
-         for(LONG i=0; i < WBenchMsg->sm_NumArgs; i++, wbarg++)
+         for(i=0; i < WBenchMsg->sm_NumArgs; i++, wbarg++)
          {
             struct DiskObject *dobj;
             char *s;
@@ -235,7 +239,7 @@ int main(int argc, char **argv)
    NewList(&gb_List);
 
    // Read the SD Card Files
-   struct FileEntry *files = Toolbox_List_Files(0);
+   files = Toolbox_List_Files(0);
    if (files)
    {
       struct FileEntry *file = files;
@@ -253,10 +257,9 @@ int main(int argc, char **argv)
       goto exit;
    }
 
-   char scsi_msg[50];
    sprintf(scsi_msg, "Device:%s Unit:%ld", scsi_dev, scsi_unit);
 
-   APTR windowObj = WindowObject,
+   windowObj = WindowObject,
       WA_Title, appname,
       WA_Activate, TRUE,
       WA_DepthGadget, TRUE,
@@ -341,6 +344,7 @@ int main(int argc, char **argv)
    mainWindow = (struct Window *)RA_OpenWindow(windowObj);
    if (mainWindow)
    {
+      ULONG wait;
       ULONG done = FALSE;
       ULONG result;
       ULONG code;
@@ -351,7 +355,7 @@ int main(int argc, char **argv)
          
       /* Obtain the window wait signal mask */
       GetAttr(WINDOW_SigMask, windowObj, &signal);
-      ULONG wait = Wait(signal | SIGBREAKF_CTRL_C | app);
+      wait = Wait(signal | SIGBREAKF_CTRL_C | app);
 
       while (!done)
       {
@@ -384,11 +388,11 @@ int main(int argc, char **argv)
                            if (userdata)
                            {
                               char *source = (char *) userdata;
+                              char destination[MAXPATH];    // static????
 
                               // Set the fuelGauge to %
                               SetGadgetAttrs((struct Gadget *)fuelGauge, mainWindow, NULL, FUELGAUGE_Percent, TRUE, FUELGAUGE_Level, 0, TAG_END);
 
-                              char destination[MAXPATH];    // static????
                               strncpy(destination, source, MAXPATH);
                               
                               // doesn't work if cancelled!!!!

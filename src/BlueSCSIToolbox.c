@@ -373,7 +373,8 @@ void bstrcpy(char *dest, UBYTE *src)
 void Toolbox_Show_files(void)
 {
    struct FileEntry *file = files;
-   for (int i = 0; i < filecount; i++)
+   int i;
+   for (i = 0; i < filecount; i++)
    {
       Printf("%2ld: %-32s", i+1, file->Name);
       if (file->Type == 1)
@@ -389,8 +390,8 @@ void Toolbox_Show_files(void)
 void Toolbox_Next_CD(int index)
 {
    UBYTE command[] = {BLUESCSI_TOOLBOX_SET_NEXT_CD, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-   command[1] = index - 1;
    int err;
+   command[1] = index - 1;
    if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
                         (UBYTE *)&command, sizeof(command),
                         (SCSIF_READ | SCSIF_AUTOSENSE))) != 0)
@@ -404,13 +405,13 @@ void Toolbox_Next_CD(int index)
 int Toolbox_Count_Files(int cdrom)
 {
    UBYTE command[] = {BLUESCSI_TOOLBOX_COUNT_FILES, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+   int err;
+   int count = 0;
+
    if (cdrom)
    {
       command[0] = BLUESCSI_TOOLBOX_COUNT_CDS;
    }
-
-   int err;
-   int count = 0;
 
    // Causes an Unknown MsgID error if sent to a HD!?
    if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
@@ -473,15 +474,16 @@ int FileCompare(const void *s1, const void *s2)
 /* List the files in the shared folder / CD images */
 int Toolbox_List_Files(int cdrom)
 {
+   UBYTE command[] = {BLUESCSI_TOOLBOX_LIST_FILES, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+   int err;
+
    // Update the file count
    Toolbox_Count_Files(cdrom);
 
-   UBYTE command[] = {BLUESCSI_TOOLBOX_LIST_FILES, 0, 0, 0, 0, 0, 0, 0, 0, 0};
    if (cdrom)
    {
       command[0] = BLUESCSI_TOOLBOX_LIST_CDS;
    }
-   int err;
 
    if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
                         (UBYTE *)&command, sizeof(command),
@@ -495,15 +497,17 @@ int Toolbox_List_Files(int cdrom)
    {
       UBYTE *c = scsi_data;
       struct FileEntry *file = files;
-      for (int f = 0; f < filecount; f++)
+      int f;
+      for (f = 0; f < filecount; f++)
       {
+         unsigned int size;
          file->Index = (int)*c++;
          file->Type = (int)*c++; // 1=file 0=dir
 
          strncpy(file->Name, c, 32);
 
          c += MAX_MAC_PATH + 2;
-         unsigned int size = c[0] << 24 | c[1] << 16 | c[2] << 8 | c[3];
+         size = c[0] << 24 | c[1] << 16 | c[2] << 8 | c[3];
          c += 4;
 
          file->Size = size;
@@ -521,7 +525,8 @@ int Toolbox_GetFileByName(char *destination, char *source)
    int count = 0;
    int index = -1;
    struct FileEntry *file = files;
-   for (int i = 0; i < filecount; i++)
+   int i;
+   for (i = 0; i < filecount; i++)
    {
       if (Stricmp(file->Name, source) == 0)
       {
@@ -535,9 +540,10 @@ int Toolbox_GetFileByName(char *destination, char *source)
    {
       int offset = 0; // offset in 4096 size pages
       UBYTE command[] = {BLUESCSI_TOOLBOX_GET_FILE, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+      BPTR fh;
       command[1] = index;
 
-      BPTR fh = Open(destination, MODE_NEWFILE);
+      fh = Open(destination, MODE_NEWFILE);
       if (!fh)
       {
          SetIoErr(ERROR_OBJECT_NOT_FOUND);
@@ -547,11 +553,11 @@ int Toolbox_GetFileByName(char *destination, char *source)
 
       while (1)
       {
+         int err;
          command[2] = (offset & 0xFF000000) >> 24;
          command[3] = (offset & 0x00FF0000) >> 16;
          command[4] = (offset & 0x0000FF00) >> 8;
          command[5] = (offset & 0x000000FF);
-         int err;
 
          if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
                               (UBYTE *)&command, sizeof(command),
@@ -589,7 +595,8 @@ int Toolbox_PutFileByName(char *destination, char *source)
 {
    int err;
    int count = 0;
-
+   BPTR fh;
+   int offset;
    UBYTE command[] = {BLUESCSI_TOOLBOX_SEND_FILE_PREP, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
    char *name = destination;
@@ -608,7 +615,7 @@ int Toolbox_PutFileByName(char *destination, char *source)
       return 0;
    }
 
-   BPTR fh = Open(source, MODE_OLDFILE);
+   fh = Open(source, MODE_OLDFILE);
    if (!fh)
    {
       SetIoErr(ERROR_OBJECT_NOT_FOUND);
@@ -616,7 +623,7 @@ int Toolbox_PutFileByName(char *destination, char *source)
       return 0;
    }
 
-   int offset = 0; // offset in 512 byte pages
+   offset = 0; // offset in 512 byte pages
    while (1)
    {
       LONG len = Read(fh, scsi_data, 512);
@@ -658,10 +665,10 @@ int Toolbox_PutFileByName(char *destination, char *source)
 /* Enable/Disable BlueSCSI debug */
 void Toolbox_Debug(debugon)
 {
-   UBYTE command[] = {BLUESCSI_TOOLBOX_TOGGLE_DEBUG, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-   command[1] = debugon;
    int err;
    int count = 0;
+   UBYTE command[] = {BLUESCSI_TOOLBOX_TOGGLE_DEBUG, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+   command[1] = debugon;
 
    if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
                         (UBYTE *)&command, sizeof(command),
