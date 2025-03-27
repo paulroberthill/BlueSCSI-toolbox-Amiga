@@ -666,7 +666,6 @@ int Toolbox_PutFileByName(char *destination, char *source)
 void Toolbox_Debug(debugon)
 {
    int err;
-   int count = 0;
    UBYTE command[] = {BLUESCSI_TOOLBOX_TOGGLE_DEBUG, 0, 0, 0, 0, 0, 0, 0, 0, 0};
    command[1] = debugon;
 
@@ -685,7 +684,6 @@ void Toolbox_Debug(debugon)
 /* Send a SCSI command */
 int DoScsiCmd(UBYTE *data, int datasize, UBYTE *cmd, int cmdsize, UBYTE flags)
 {
-   int i;
    io_ptr->io_Length = sizeof(struct SCSICmd);
    io_ptr->io_Data = scsi_cmd;
    io_ptr->io_Command = HD_SCSICMD;

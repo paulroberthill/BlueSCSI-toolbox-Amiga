@@ -331,7 +331,6 @@ int main(int argc, char **argv)
       ULONG result;
       ULONG code;
       ULONG signal;
-      ULONG attr;
       struct Node *node;
       UBYTE app = (1L << AppPort->mp_SigBit);
          

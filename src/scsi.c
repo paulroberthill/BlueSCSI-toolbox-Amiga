@@ -96,7 +96,6 @@ void scsi_cleanup()
 /* Send a SCSI command */
 int DoScsiCmd(UBYTE *data, int datasize, UBYTE *cmd, int cmdsize, UBYTE flags)
 {
-   int i;
    io_ptr->io_Length = sizeof(struct SCSICmd);
    io_ptr->io_Data = scsi_cmd;
    io_ptr->io_Command = HD_SCSICMD;
