@@ -45,7 +45,7 @@
 // scsi.c
 struct FileEntry *Toolbox_List_Files(int cdrom);
 void Toolbox_Set_Next_CD(UBYTE index);
-void scsi_cleanup();
+void scsi_cleanup(void);
 int Toolbox_Download(char *source, char *destination, void (*callback)(int));
 int scsi_setup(char *scsi_dev, int scsi_unit);
 extern int scsi_isBlueSCSI, scsi_isZuluSCSI;

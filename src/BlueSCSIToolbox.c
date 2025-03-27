@@ -44,20 +44,20 @@
 static const char ver[] = "$VER: BlueSCSIToolbox 1.2 (18.5.2024)";
 
 int Toolbox_List_Files(int cdrom);
-int Toolbox_List_Devices();
+int Toolbox_List_Devices(void);
 int Toolbox_Count_Files(int cdrom);
 int Toolbox_GetFileByName(char *destination, char *source);
 int Toolbox_PutFileByName(char *destination, char *source);
-int Toolbox_List_CDs();
-void Toolbox_Show_files();
+int Toolbox_List_CDs(void);
+void Toolbox_Show_files(void);
 void Toolbox_Next_CD(int index);
 void Toolbox_Debug(int debugon);
 
 void dump(char *msg, UBYTE *d, int len);
-void DiskChange();
+void DiskChange(void);
 void bstrcpy(char *dest,UBYTE *src);
 int DoScsiCmd(UBYTE *data, int datasize, UBYTE *cmd, int cmdsize, UBYTE flags);
-int BlueSCSI_InitDevice();
+int BlueSCSI_InitDevice(void);
 
 struct IOStdReq *io_ptr;
 struct MsgPort *mp_ptr;
@@ -300,7 +300,7 @@ exit:
 }
 
 /* Send a diskchange command to the filesystem that is connected to this device/unit */
-void DiskChange()
+void DiskChange(void)
 {
    char drive[256];
 	char device[256];
@@ -338,7 +338,7 @@ void DiskChange()
 }
 
 /* Send a SCSI inquiry command to the device to gather some info */
-int BlueSCSI_InitDevice()
+int BlueSCSI_InitDevice(void)
 {
    UBYTE command[] = {SCSI_CMD_INQ, 0, 0, 0, 252, 0};
    int err;
@@ -370,7 +370,7 @@ void bstrcpy(char *dest, UBYTE *src)
 }
 
 /* Show all the files array */
-void Toolbox_Show_files()
+void Toolbox_Show_files(void)
 {
    struct FileEntry *file = files;
    for (int i = 0; i < filecount; i++)
@@ -435,7 +435,7 @@ int Toolbox_Count_Files(int cdrom)
 
 /* Devices that are active on this SCSI device.
    Does not seem to return anything? */
-int Toolbox_List_Devices()
+int Toolbox_List_Devices(void)
 {
    // 0xD9 BLUESCSI_TOOLBOX_LIST_DEVICES
    UBYTE command[] = {BLUESCSI_TOOLBOX_LIST_DEVICES, 0, 0, 0, 0, 0, 0, 0, 0, 0};

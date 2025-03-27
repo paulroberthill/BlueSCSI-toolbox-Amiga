@@ -44,7 +44,7 @@
 
 static const char ver[] = "$VER: SDTransfer 1.2 (18.5.2024)";
 
-void FreeListBrowserNodes();
+void FreeListBrowserNodes(void);
 BOOL AddListBrowserNode(ULONG index, STRPTR filename);
 void progress(int pc);
 void getfilename(char *name, char *title);
@@ -485,7 +485,7 @@ BOOL AddListBrowserNode(ULONG index, STRPTR filename)
 }
 
 /* Free the browser nodes */
-void FreeListBrowserNodes()
+void FreeListBrowserNodes(void)
 {
   struct Node *node, *nextnode;
   node = gb_List.lh_Head;

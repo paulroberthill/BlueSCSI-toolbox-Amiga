@@ -38,7 +38,7 @@ int scsi_isRemovable;
 struct FileEntry *files = NULL; 
 int filecount = 0;
 
-int Toolbox_InitDevice();
+int Toolbox_InitDevice(void);
 
 /* Setup the SCSI device */
 int scsi_setup(char *scsi_dev, int scsi_unit)
@@ -113,7 +113,7 @@ int DoScsiCmd(UBYTE *data, int datasize, UBYTE *cmd, int cmdsize, UBYTE flags)
 }
 
 /* Send a SCSI inquiry command to the device to gather some info */
-int Toolbox_InitDevice()
+int Toolbox_InitDevice(void)
 {
    int err = 0;
 #ifdef TESTMODE
