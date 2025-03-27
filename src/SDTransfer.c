@@ -404,7 +404,9 @@ int main(int argc, char **argv)
                                  if (bytes > 0)
                                  {
                                     // Display the number of bytes
-                                    ULONG varargs[] = { (ULONG) bytes, (ULONG) destination };
+                                    ULONG varargs[2];
+                                    varargs[0] = (ULONG) bytes;
+                                    varargs[1] = (ULONG) destination;
                                     SetGadgetAttrs((struct Gadget *)fuelGauge, mainWindow, NULL, 
                                                    GA_Text, "%ld bytes saved to %s", 
                                                    FUELGAUGE_VarArgs, varargs, 
