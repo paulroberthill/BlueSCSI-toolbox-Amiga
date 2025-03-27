@@ -1,0 +1,23 @@
+COMMONOBJS=BlueSCSIlogo.o ZuluSCSIlogo.o scsi.o common.o
+
+all: BlueSCSIToolbox CDChanger SDTransfer
+
+BlueSCSIToolbox: BlueSCSIToolbox.o
+  sc noicons link BlueSCSIToolbox.o to $@
+
+CDChanger: CDChanger.o $(COMMONOBJS)
+  sc noicons link CDChanger.o $(COMMONOBJS) to $@
+
+SDTransfer: SDTransfer.o $(COMMONOBJS)
+  sc noicons link SDTransfer.o $(COMMONOBJS) to $@
+
+CDChanger.o: CDChanger.c toolbox.h
+
+SDTransfer.o: SDTransfer.c toolbox.h
+
+scsi.o: scsi.c toolbox.h
+
+common.o: common.c toolbox.h
+
+clean:
+  -delete QUIET BlueSCSIToolbox CDChanger SDTransfer \#?.o \#?.lnk
