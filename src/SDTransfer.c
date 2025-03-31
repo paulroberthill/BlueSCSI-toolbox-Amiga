@@ -44,7 +44,7 @@
 
 static const char ver[] = "$VER: SDTransfer 1.2 (18.5.2024)";
 
-void FreeListBrowserNodes();
+void FreeListBrowserNodes(void);
 BOOL AddListBrowserNode(ULONG index, STRPTR filename);
 void progress(int pc);
 void getfilename(char *name, char *title);
@@ -98,6 +98,9 @@ int main(int argc, char **argv)
 {
    struct RDArgs *rd;
    LONG params[] = {0, 0};
+   struct FileEntry *files;
+   char scsi_msg[50];
+   APTR windowObj;
    Object *listBrowser;
 
    if ((IntuitionBase = (struct IntuitionBase *) OpenLibrary("intuition.library", 33L)) == NULL)
@@ -152,9 +155,10 @@ int main(int argc, char **argv)
       {
          struct WBStartup *WBenchMsg = (struct WBStartup *)argv;
          struct WBArg *wbarg;
+         LONG i;
 
          wbarg = WBenchMsg->sm_ArgList;
-         for(LONG i=0; i < WBenchMsg->sm_NumArgs; i++, wbarg++)
+         for(i=0; i < WBenchMsg->sm_NumArgs; i++, wbarg++)
          {
             struct DiskObject *dobj;
             char *s;
@@ -235,7 +239,7 @@ int main(int argc, char **argv)
    NewList(&gb_List);
 
    // Read the SD Card Files
-   struct FileEntry *files = Toolbox_List_Files(0);
+   files = Toolbox_List_Files(0);
    if (files)
    {
       struct FileEntry *file = files;
@@ -253,10 +257,9 @@ int main(int argc, char **argv)
       goto exit;
    }
 
-   char scsi_msg[50];
    sprintf(scsi_msg, "Device:%s Unit:%ld", scsi_dev, scsi_unit);
 
-   APTR windowObj = WindowObject,
+   windowObj = WindowObject,
       WA_Title, appname,
       WA_Activate, TRUE,
       WA_DepthGadget, TRUE,
@@ -341,17 +344,17 @@ int main(int argc, char **argv)
    mainWindow = (struct Window *)RA_OpenWindow(windowObj);
    if (mainWindow)
    {
+      ULONG wait;
       ULONG done = FALSE;
       ULONG result;
       ULONG code;
       ULONG signal;
-      ULONG attr;
       struct Node *node;
       UBYTE app = (1L << AppPort->mp_SigBit);
          
       /* Obtain the window wait signal mask */
       GetAttr(WINDOW_SigMask, windowObj, &signal);
-      ULONG wait = Wait(signal | SIGBREAKF_CTRL_C | app);
+      wait = Wait(signal | SIGBREAKF_CTRL_C | app);
 
       while (!done)
       {
@@ -384,11 +387,11 @@ int main(int argc, char **argv)
                            if (userdata)
                            {
                               char *source = (char *) userdata;
+                              char destination[MAXPATH];    // static????
 
                               // Set the fuelGauge to %
                               SetGadgetAttrs((struct Gadget *)fuelGauge, mainWindow, NULL, FUELGAUGE_Percent, TRUE, FUELGAUGE_Level, 0, TAG_END);
 
-                              char destination[MAXPATH];    // static????
                               strncpy(destination, source, MAXPATH);
                               
                               // doesn't work if cancelled!!!!
@@ -400,7 +403,9 @@ int main(int argc, char **argv)
                                  if (bytes > 0)
                                  {
                                     // Display the number of bytes
-                                    ULONG varargs[] = { (ULONG) bytes, (ULONG) destination };
+                                    ULONG varargs[2];
+                                    varargs[0] = (ULONG) bytes;
+                                    varargs[1] = (ULONG) destination;
                                     SetGadgetAttrs((struct Gadget *)fuelGauge, mainWindow, NULL, 
                                                    GA_Text, "%ld bytes saved to %s", 
                                                    FUELGAUGE_VarArgs, varargs, 
@@ -481,11 +486,11 @@ BOOL AddListBrowserNode(ULONG index, STRPTR filename)
   {
     AddTail(&gb_List,node);
   }
-  return( node ? TRUE : FALSE );
+  return (BOOL)( node ? TRUE : FALSE );
 }
 
 /* Free the browser nodes */
-void FreeListBrowserNodes()
+void FreeListBrowserNodes(void)
 {
   struct Node *node, *nextnode;
   node = gb_List.lh_Head;

@@ -38,7 +38,7 @@ int scsi_isRemovable;
 struct FileEntry *files = NULL; 
 int filecount = 0;
 
-int Toolbox_InitDevice();
+int Toolbox_InitDevice(void);
 
 /* Setup the SCSI device */
 int scsi_setup(char *scsi_dev, int scsi_unit)
@@ -96,7 +96,6 @@ void scsi_cleanup()
 /* Send a SCSI command */
 int DoScsiCmd(UBYTE *data, int datasize, UBYTE *cmd, int cmdsize, UBYTE flags)
 {
-   int i;
    io_ptr->io_Length = sizeof(struct SCSICmd);
    io_ptr->io_Data = scsi_cmd;
    io_ptr->io_Command = HD_SCSICMD;
@@ -113,7 +112,7 @@ int DoScsiCmd(UBYTE *data, int datasize, UBYTE *cmd, int cmdsize, UBYTE flags)
 }
 
 /* Send a SCSI inquiry command to the device to gather some info */
-int Toolbox_InitDevice()
+int Toolbox_InitDevice(void)
 {
    int err = 0;
 #ifdef TESTMODE
@@ -214,14 +213,14 @@ struct FileEntry *Toolbox_List_Files(int cdrom)
    filecount = Toolbox_Count_Files(cdrom);
    if (filecount > 0)
    {
-      files = (struct FileEntry *)AllocMem(sizeof(struct FileEntry) * (filecount + 1), MEMF_CLEAR);
-      struct FileEntry *file = files;
+      struct FileEntry *file;
       UBYTE command[] = {BLUESCSI_TOOLBOX_LIST_FILES, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+      int err;
+      file = files = (struct FileEntry *)AllocMem(sizeof(struct FileEntry) * (filecount + 1), MEMF_CLEAR);
       if (cdrom)
       {
          command[0] = BLUESCSI_TOOLBOX_LIST_CDS;
       }
-      int err;
 
       if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
                            (UBYTE *)&command, sizeof(command),
@@ -234,7 +233,8 @@ struct FileEntry *Toolbox_List_Files(int cdrom)
       if (scsi_cmd->scsi_Actual)
       {
          UBYTE *c = scsi_data;
-         for (int f = 0; f < filecount; f++)
+         int f;
+         for (f = 0; f < filecount; f++)
          {
             file->Index = (int)*c++;
             file->Type = (int)*c++;    // 0=dir 1=file
@@ -258,8 +258,8 @@ struct FileEntry *Toolbox_List_Files(int cdrom)
 void Toolbox_Set_Next_CD(UBYTE index)
 {
    UBYTE command[] = {BLUESCSI_TOOLBOX_SET_NEXT_CD, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-   command[1] = (UBYTE) index;
    int err;
+   command[1] = (UBYTE) index;
    if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
                         (UBYTE *)&command, sizeof(command),
                         (SCSIF_READ | SCSIF_AUTOSENSE))) != 0)
@@ -279,7 +279,8 @@ int Toolbox_Download(char *source, char *destination, void (*callback)(int))
       struct FileEntry *file = files;
       int count = 0;
       int index = -1;
-      for (int i = 0; i < filecount; i++)
+      int i;
+      for (i = 0; i < filecount; i++)
       {
          if (Stricmp(file->Name, source) == 0)
          {
@@ -293,11 +294,11 @@ int Toolbox_Download(char *source, char *destination, void (*callback)(int))
       {
          int offset = 0; // offset in 4096 size pages
          int size = file->Size;
-
+         BPTR fh;
          UBYTE command[] = {BLUESCSI_TOOLBOX_GET_FILE, 0, 0, 0, 0, 0, 0, 0, 0, 0};
          command[1] = index;
 
-         BPTR fh = Open(destination, MODE_NEWFILE);
+         fh = Open(destination, MODE_NEWFILE);
          if (!fh)
          {
             SetIoErr(ERROR_OBJECT_NOT_FOUND);
@@ -307,11 +308,11 @@ int Toolbox_Download(char *source, char *destination, void (*callback)(int))
 
          while (1)
          {
+            int err;
             command[2] = (offset & 0xFF000000) >> 24;
             command[3] = (offset & 0x00FF0000) >> 16;
             command[4] = (offset & 0x0000FF00) >> 8;
             command[5] = (offset & 0x000000FF);
-            int err;
 
             if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
                                  (UBYTE *)&command, sizeof(command),

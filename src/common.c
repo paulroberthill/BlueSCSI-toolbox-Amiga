@@ -26,9 +26,11 @@ void MessageBox(char *title, char *body)
    {
       sizeof(struct EasyStruct),
       0,
-      title,
-      body,
+      NULL,
+      NULL,
       "OK"
    };
+   general_es.es_Title = title;
+   general_es.es_TextFormat = body;
    EasyRequest(NULL, &general_es, NULL);
 }
