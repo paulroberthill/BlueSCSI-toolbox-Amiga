@@ -37,6 +37,7 @@
 #include <images/label.h>
 #include <reaction/reaction_macros.h>
 #include <devices/scsidisk.h>
+#include <graphics/gfx.h>
 #include <workbench/startup.h>
 #include "toolbox.h"
 
@@ -82,10 +83,14 @@ struct ColumnInfo gb_ListbrowserColumn[] =
 
 extern UWORD bluescsi_logo_data[];
 extern UWORD zuluscsi_logo_data[];
+#define LOGO_WIDTH  192
+#define LOGO_HEIGHT 71
+#define LOGO_DATA_SIZE (RASSIZE(LOGO_WIDTH, LOGO_HEIGHT))
+UWORD *chip_logo_data = NULL;
 struct Image logo_image =
 {
     0, 0,             // LeftEdge, TopEdge
-    192, 71, 1,        // Width, Height, Depth
+    LOGO_WIDTH, LOGO_HEIGHT, 1,  // Width, Height, Depth
     NULL,        // ImageData
     0x0001, 0x0000,   // PlanePick, PlaneOnOff
     NULL              // NextImage
@@ -220,10 +225,11 @@ int main(int argc, char **argv)
       goto exit;
    }
 
-   if (scsi_isZuluSCSI) {
-      logo_image.ImageData = zuluscsi_logo_data;
-   } else {
-      logo_image.ImageData = bluescsi_logo_data;
+   chip_logo_data = (UWORD *)AllocVec(LOGO_DATA_SIZE, MEMF_CHIP);
+   if (chip_logo_data) {
+      CopyMem(scsi_isZuluSCSI ? zuluscsi_logo_data : bluescsi_logo_data,
+              chip_logo_data, LOGO_DATA_SIZE);
+      logo_image.ImageData = chip_logo_data;
    }
 
    NewList(&gb_List);
@@ -412,6 +418,7 @@ int main(int argc, char **argv)
    }
 
 exit:
+   if (chip_logo_data) FreeVec(chip_logo_data);
    scsi_cleanup();
 
    if (AppPort) DeleteMsgPort(AppPort);
