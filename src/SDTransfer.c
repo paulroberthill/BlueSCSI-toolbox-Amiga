@@ -49,6 +49,7 @@ void FreeListBrowserNodes(void);
 BOOL AddListBrowserNode(ULONG index, STRPTR filename);
 void progress(int pc);
 void getfilename(char *name, char *title);
+void format_size(char *buffer, int length, unsigned long long size);
 
 struct Library *WindowBase, *LayoutBase, *LabelBase, *ListBrowserBase;
 struct Library *UtilityBase, *FuelGaugeBase, *IconBase, *AslBase;
@@ -60,6 +61,7 @@ LONG scsi_unit = -1;
 
 static char *readArgsTemplate = "DEVICE/K,UNIT/K/N";
 static char* appname = "SD Transfer";
+static char fuelGaugeText[MAXPATH + 48];
 
 enum ToolboxParams
 {
@@ -405,16 +407,15 @@ int main(int argc, char **argv)
                               getfilename(destination, "Save As");
                               if (destination)
                               {
-                                 int bytes = Toolbox_Download(source, destination, progress);
+                                 unsigned long long bytes = Toolbox_Download(source, destination, progress);
                                  if (bytes > 0)
                                  {
-                                    // Display the number of bytes
-                                    ULONG varargs[2];
-                                    varargs[0] = (ULONG) bytes;
-                                    varargs[1] = (ULONG) destination;
+                                    char size_text[32];
+
+                                    format_size(size_text, sizeof(size_text), bytes);
+                                    snprintf(fuelGaugeText, sizeof(fuelGaugeText), "%s bytes saved to %s", size_text, destination);
                                     SetGadgetAttrs((struct Gadget *)fuelGauge, mainWindow, NULL, 
-                                                   GA_Text, "%ld bytes saved to %s", 
-                                                   FUELGAUGE_VarArgs, varargs, 
+                                                   GA_Text, fuelGaugeText,
                                                    FUELGAUGE_Percent, FALSE,
                                                    TAG_END);
                                  }
@@ -475,6 +476,22 @@ exit:
 void progress(int pc)
 {
    SetGadgetAttrs((struct Gadget *)fuelGauge, mainWindow, NULL, FUELGAUGE_Level, pc, TAG_END);
+}
+
+void format_size(char *buffer, int length, unsigned long long size)
+{
+   char temp[32];
+   int pos = sizeof(temp) - 1;
+
+   temp[pos] = '\0';
+   do
+   {
+      temp[--pos] = '0' + (size % 10);
+      size /= 10;
+   } while (size != 0 && pos > 0);
+
+   strncpy(buffer, &temp[pos], length);
+   buffer[length - 1] = '\0';
 }
 
 /* Add a filename to the browser */

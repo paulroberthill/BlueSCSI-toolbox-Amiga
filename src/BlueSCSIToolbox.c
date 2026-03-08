@@ -57,7 +57,7 @@ int Toolbox_List_Files(int cdrom);
 int Toolbox_List_Devices(void);
 int Toolbox_GetCapabilities(void);
 int Toolbox_Count_Files(int cdrom);
-int Toolbox_GetFileByName(char *destination, char *source);
+unsigned long long Toolbox_GetFileByName(char *destination, char *source);
 int Toolbox_PutFileByName(char *destination, char *source);
 int Toolbox_List_CDs(void);
 void Toolbox_Show_files(void);
@@ -69,6 +69,8 @@ void DiskChange(void);
 void bstrcpy(char *dest,UBYTE *src);
 int DoScsiCmd(UBYTE *data, int datasize, UBYTE *cmd, int cmdsize, UBYTE flags);
 int BlueSCSI_InitDevice(void);
+static unsigned long long Toolbox_ParseEntrySize(const UBYTE *entry);
+static void Toolbox_FormatSize(char *buffer, int length, unsigned long long size);
 
 struct IOStdReq *io_ptr;
 struct MsgPort *mp_ptr;
@@ -93,7 +95,7 @@ LONG scsi_id = 0;
 struct FileEntry
 {
    int Index;
-   unsigned int Size;
+   unsigned long long Size;
    int Type;
    char Name[32 + 1];
 };
@@ -397,6 +399,31 @@ int BlueSCSI_InitDevice(void)
    return 0;
 }
 
+static unsigned long long Toolbox_ParseEntrySize(const UBYTE *entry)
+{
+   return ((unsigned long long)entry[35] << 32)
+      | ((unsigned long long)entry[36] << 24)
+      | ((unsigned long long)entry[37] << 16)
+      | ((unsigned long long)entry[38] << 8)
+      | (unsigned long long)entry[39];
+}
+
+static void Toolbox_FormatSize(char *buffer, int length, unsigned long long size)
+{
+   char temp[32];
+   int pos = sizeof(temp) - 1;
+
+   temp[pos] = '\0';
+   do
+   {
+      temp[--pos] = '0' + (size % 10);
+      size /= 10;
+   } while (size != 0 && pos > 0);
+
+   strncpy(buffer, &temp[pos], length);
+   buffer[length - 1] = '\0';
+}
+
 /* Copy a BCPL string to a C string */
 void bstrcpy(char *dest, UBYTE *src)
 {
@@ -412,9 +439,14 @@ void Toolbox_Show_files(void)
    int i;
    for (i = 0; i < filecount; i++)
    {
+      char size_text[32];
+
       Printf("%2ld: %-32s", i+1, file->Name);
       if (file->Type == 1)
-         Printf("%10lu\n", file->Size);
+      {
+         Toolbox_FormatSize(size_text, sizeof(size_text), file->Size);
+         Printf("%10s\n", size_text);
+      }
       else
          PutStr("       Dir\n");
       file++;
@@ -580,8 +612,7 @@ int Toolbox_List_Files(int cdrom)
          file->Type = c[1]; // 1=file 0=dir
          strncpy(file->Name, (char *)&c[2], MAX_MAC_PATH);
          file->Name[MAX_MAC_PATH] = '\0';
-         // Size is 5 bytes at offset 35; skip high byte, read lower 32 bits
-         file->Size = (c[36] << 24) | (c[37] << 16) | (c[38] << 8) | c[39];
+         file->Size = Toolbox_ParseEntrySize(c);
          file++;
       }
 
@@ -591,9 +622,9 @@ int Toolbox_List_Files(int cdrom)
 }
 
 /* Copy a file from the shared folder to a destination */
-int Toolbox_GetFileByName(char *destination, char *source)
+unsigned long long Toolbox_GetFileByName(char *destination, char *source)
 {
-   int count = 0;
+   unsigned long long count = 0;
    int index = -1;
    struct FileEntry *file = files;
    int i;
@@ -610,6 +641,7 @@ int Toolbox_GetFileByName(char *destination, char *source)
    if (index >= 0)
    {
       int offset = 0; // offset in 4096 size pages
+      char size_text[32];
       UBYTE command[] = {BLUESCSI_TOOLBOX_GET_FILE, 0, 0, 0, 0, 0, 0, 0, 0, 0};
       BPTR fh;
       command[1] = index;
@@ -650,7 +682,8 @@ int Toolbox_GetFileByName(char *destination, char *source)
          }
       }
       Close(fh);
-      Printf("%s. %ld bytes received\n", destination, count);
+      Toolbox_FormatSize(size_text, sizeof(size_text), count);
+      Printf("%s. %s bytes received\n", destination, size_text);
    }
    else
    {

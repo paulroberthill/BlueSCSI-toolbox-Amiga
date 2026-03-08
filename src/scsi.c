@@ -43,6 +43,15 @@ int filecount = 0;
 int Toolbox_InitDevice(void);
 int Toolbox_GetCapabilities(void);
 
+static unsigned long long Toolbox_ParseEntrySize(const UBYTE *entry)
+{
+   return ((unsigned long long)entry[35] << 32)
+      | ((unsigned long long)entry[36] << 24)
+      | ((unsigned long long)entry[37] << 16)
+      | ((unsigned long long)entry[38] << 8)
+      | (unsigned long long)entry[39];
+}
+
 /* Setup the SCSI device */
 int scsi_setup(char *scsi_dev, int scsi_unit)
 {
@@ -273,8 +282,7 @@ struct FileEntry *Toolbox_List_Files(int cdrom)
             Strncpy(file->Name, (char *)&c[2], MAX_MAC_PATH);
             file->Name[MAX_MAC_PATH] = '\0';
 
-            // Size is 5 bytes at offset 35; skip high byte, read lower 32 bits
-            file->Size = (c[36] << 24) | (c[37] << 16) | (c[38] << 8) | c[39];
+            file->Size = Toolbox_ParseEntrySize(c);
             file++;
          }
          file->Type = -1;  // EOF
@@ -301,13 +309,13 @@ void Toolbox_Set_Next_CD(UBYTE index)
 }
 
 /* Download a file from the SD card */
-int Toolbox_Download(char *source, char *destination, void (*callback)(int))
+unsigned long long Toolbox_Download(char *source, char *destination, void (*callback)(int))
 {
-   int result = 0;
+   unsigned long long result = 0;
    if (files)
    {
       struct FileEntry *file = files;
-      int count = 0;
+      unsigned long long count = 0;
       int index = -1;
       int i;
       for (i = 0; i < filecount; i++)
@@ -323,7 +331,7 @@ int Toolbox_Download(char *source, char *destination, void (*callback)(int))
       if (index >= 0 && file->Size > 0)
       {
          int offset = 0; // offset in 4096 size pages
-         int size = file->Size;
+         unsigned long long size = file->Size;
          BPTR fh;
          UBYTE command[] = {BLUESCSI_TOOLBOX_GET_FILE, 0, 0, 0, 0, 0, 0, 0, 0, 0};
          command[1] = index;
@@ -375,7 +383,11 @@ int Toolbox_Download(char *source, char *destination, void (*callback)(int))
             if (callback && (offset % 16 == 0))
             {
                // Update progress every 64k
-               int pc = (offset*100)/(size / 4096);
+               int pc = (int)(((unsigned long long)offset * 4096ULL * 100ULL) / size);
+               if (pc > 100)
+               {
+                  pc = 100;
+               }
                callback(pc);
             }
          }

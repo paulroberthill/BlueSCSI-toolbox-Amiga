@@ -56,7 +56,7 @@
 struct FileEntry *Toolbox_List_Files(int cdrom);
 void Toolbox_Set_Next_CD(UBYTE index);
 void scsi_cleanup(void);
-int Toolbox_Download(char *source, char *destination, void (*callback)(int));
+unsigned long long Toolbox_Download(char *source, char *destination, void (*callback)(int));
 int scsi_setup(char *scsi_dev, int scsi_unit);
 int Toolbox_GetCapabilities(void);
 extern int scsi_isBlueSCSI, scsi_isZuluSCSI;
@@ -68,7 +68,7 @@ void MessageBox(char *title, char *body);
 struct FileEntry
 {
    int Index;
-   unsigned int Size;
+   unsigned long long Size;
    int Type;
    char Name[32 + 1];
    char Number[5 + 1];
