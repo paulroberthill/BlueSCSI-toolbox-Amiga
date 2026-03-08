@@ -42,6 +42,7 @@ int filecount = 0;
 
 int Toolbox_InitDevice(void);
 int Toolbox_GetCapabilities(void);
+static int Toolbox_InquiryHasName(const char *name);
 
 static unsigned long long Toolbox_ParseEntrySize(const UBYTE *entry)
 {
@@ -88,7 +89,11 @@ int scsi_setup(char *scsi_dev, int scsi_unit)
       return -1;
    }
 
-   Toolbox_GetCapabilities();
+   if (Toolbox_GetCapabilities() != 0 && !scsi_isBlueSCSI && !scsi_isZuluSCSI)
+   {
+      MessageBox("scsi_setup", "Toolbox API not available on this device\n");
+      return -1;
+   }
 
    return 0;
 }
@@ -151,9 +156,34 @@ int Toolbox_InitDevice(void)
       scsi_isRemovable = (scsi_data[1] & 0x80) ? 1 : 0;
       scsi_isBlueSCSI = Strnicmp("BlueSCSI", &scsi_data[8], 8) == 0;
       scsi_isZuluSCSI = Strnicmp("ZuluSCSI", &scsi_data[8], 8) == 0;
+      if (!scsi_isBlueSCSI && !scsi_isZuluSCSI)
+      {
+         scsi_isBlueSCSI = Toolbox_InquiryHasName("BlueSCSI");
+         scsi_isZuluSCSI = Toolbox_InquiryHasName("ZuluSCSI");
+      }
    }
 #endif
    return err;
+}
+
+static int Toolbox_InquiryHasName(const char *name)
+{
+   int i;
+
+   if (scsi_cmd->scsi_Actual < 36 + 8)
+   {
+      return 0;
+   }
+
+   for (i = 36; i <= (int)scsi_cmd->scsi_Actual - 8; i++)
+   {
+      if (Strnicmp((STRPTR)name, (STRPTR)&scsi_data[i], 8) == 0)
+      {
+         return 1;
+      }
+   }
+
+   return 0;
 }
 
 /* Query firmware API version and capability flags */

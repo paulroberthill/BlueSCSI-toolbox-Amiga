@@ -69,6 +69,7 @@ void DiskChange(void);
 void bstrcpy(char *dest,UBYTE *src);
 int DoScsiCmd(UBYTE *data, int datasize, UBYTE *cmd, int cmdsize, UBYTE flags);
 int BlueSCSI_InitDevice(void);
+static int Toolbox_InquiryHasName(const char *name);
 static unsigned long long Toolbox_ParseEntrySize(const UBYTE *entry);
 static void Toolbox_FormatSize(char *buffer, int length, unsigned long long size);
 
@@ -137,6 +138,7 @@ int main(int argc, char* argv[])
 {
    struct RDArgs *rd;
    enum ToolboxCommand toolboxCommand = TOOLBOX_NONE;
+   int capabilities_ok;
    char filename[256];
    LONG params[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
    LONG nextcd;
@@ -248,18 +250,11 @@ int main(int argc, char* argv[])
       PutStr("Error sending inquiry to device\n");
       goto exit;
    }
-   if (!scsi_isBlueSCSI && !scsi_isZuluSCSI)
+   capabilities_ok = Toolbox_GetCapabilities() == 0;
+   if (!capabilities_ok && !scsi_isBlueSCSI && !scsi_isZuluSCSI)
    {
-      // Vendor string may be overridden in ini; try capabilities query
-      if (Toolbox_GetCapabilities() != 0)
-      {
-         PutStr("Not a BlueSCSI or ZuluSCSI device\n");
-         goto exit;
-      }
-   }
-   else
-   {
-      Toolbox_GetCapabilities();
+      PutStr("Toolbox API not available on this device\n");
+      goto exit;
    }
 
    switch (toolboxCommand)
@@ -395,7 +390,32 @@ int BlueSCSI_InitDevice(void)
       scsi_isCD = (scsi_data[0] & 0x1F) == 0x05;
       scsi_isBlueSCSI = Strnicmp("BlueSCSI", &scsi_data[8], 8) == 0;
       scsi_isZuluSCSI = Strnicmp("ZuluSCSI", &scsi_data[8], 8) == 0;
+      if (!scsi_isBlueSCSI && !scsi_isZuluSCSI)
+      {
+         scsi_isBlueSCSI = Toolbox_InquiryHasName("BlueSCSI");
+         scsi_isZuluSCSI = Toolbox_InquiryHasName("ZuluSCSI");
+      }
    }
+   return 0;
+}
+
+static int Toolbox_InquiryHasName(const char *name)
+{
+   int i;
+
+   if (scsi_cmd->scsi_Actual < 36 + 8)
+   {
+      return 0;
+   }
+
+   for (i = 36; i <= (int)scsi_cmd->scsi_Actual - 8; i++)
+   {
+      if (Strnicmp((STRPTR)name, (STRPTR)&scsi_data[i], 8) == 0)
+      {
+         return 1;
+      }
+   }
+
    return 0;
 }
 
