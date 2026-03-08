@@ -22,5 +22,6 @@ The SD Transfer tool allows you to transfer files from the SD card to the Amiga.
 * 1.2 (18.05.2024)
 Thanks to Stefan Reinauer for adding support for the ZuluSCSI! (https://zuluscsi.com/)
 * 1.2c (18.06.2024) Removed some OS3.2 utility.library functions so older OS versions are suported. Strncpy => strncpy, Strncat => strncat.
+* 1.3 (08.08.2026) Various fixes from Stefan Reinauer. 68000 support. Chip RAM fix for the logo and others. Thanks Stefan!
 
 BlueSCSI is copyright Eric Helgeson. The BlueSCSI name and logo used with permission.
