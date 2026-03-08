@@ -530,9 +530,13 @@ static const char *deviceTypeName(UBYTE type)
    switch (type)
    {
    case 0: return "Hard disk";
+   case 1: return "Removable disk";
    case 2: return "CD-ROM";
+   case 3: return "Floppy";
+   case 4: return "Magneto-optical";
    case 5: return "Tape";
    case 6: return "Network";
+   case 7: return "ZIP drive";
    case 0xFF: return "Not enabled";
    default: return "Unknown";
    }
