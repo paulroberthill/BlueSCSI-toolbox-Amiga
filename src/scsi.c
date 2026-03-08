@@ -132,10 +132,10 @@ int Toolbox_InitDevice(void)
 
    if (scsi_cmd->scsi_Actual)
    {
-      scsi_isCD = (scsi_data[0] & 0x1F) ? 0x05 : 0x00;
+      scsi_isCD = (scsi_data[0] & 0x1F) == 0x05;
       scsi_isRemovable = (scsi_data[1] & 0x80) ? 1 : 0;
-      scsi_isBlueSCSI = (scsi_isRemovable == 1) && Strnicmp("BlueSCSI", &scsi_data[8], 8) == 0; //!
-      scsi_isZuluSCSI = (scsi_isRemovable == 1) && Strnicmp("ZuluSCSI", &scsi_data[8], 8) == 0; //!
+      scsi_isBlueSCSI = Strnicmp("BlueSCSI", &scsi_data[8], 8) == 0;
+      scsi_isZuluSCSI = Strnicmp("ZuluSCSI", &scsi_data[8], 8) == 0;
    }
 #endif
    return err;
