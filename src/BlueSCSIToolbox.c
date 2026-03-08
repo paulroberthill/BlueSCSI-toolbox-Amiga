@@ -734,12 +734,14 @@ int Toolbox_PutFileByName(char *destination, char *source)
    return count;
 }
 
-/* Enable/Disable BlueSCSI debug */
-void Toolbox_Debug(debugon)
+/* Enable/Disable debug logging on the device */
+void Toolbox_Debug(int debugon)
 {
    int err;
    UBYTE command[] = {BLUESCSI_TOOLBOX_TOGGLE_DEBUG, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-   command[1] = debugon;
+   // CDB[1]=0 means SET debug level, CDB[2]=value
+   command[1] = 0;
+   command[2] = debugon;
 
    if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
                         (UBYTE *)&command, sizeof(command),
@@ -749,7 +751,7 @@ void Toolbox_Debug(debugon)
    }
    else
    {
-      Printf("Debug set to %ld\n", debugon);
+      Printf("Debug set to %ld\n", (LONG)debugon);
    }
 }
 
