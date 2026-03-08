@@ -1,8 +1,28 @@
 OBJS	 = BlueSCSIToolbox.o CDChanger.o BlueSCSIlogo.o ZuluSCSIlogo.o Test.o scsi.o SDTransfer.o
 CC	     = vc
-CFLAGS   = +aos68k "-ID:\Amiga\Include_H" -O2 -sc -c99 -cpu=68020
-# -DDEBUG
-LFLAGS	 = -lamiga -ldebug
+
+DISTDIR  = ../dist
+
+ifeq ($(OS),Windows_NT)
+INCLUDES = "-ID:\Amiga\Include_H"
+RM       = del
+CP       = copy
+MKDIR    = if not exist $(DISTDIR) mkdir $(DISTDIR)
+PATHSEP  = \\
+else
+INCLUDES = -I/opt/amiga/m68k-amigaos/ndk-include -I/opt/amiga/m68k-amigaos/vbcc/include
+RM       = rm
+CP       = cp
+MKDIR    = mkdir -p $(DISTDIR)
+PATHSEP  = /
+endif
+
+TIMEVAL_DEFS = -D__USE_NEW_TIMEVAL__ -Dtimeval=TimeVal -Dtimerequest=TimeRequest -Dtv_sec=tv_secs -Dtv_usec=tv_micro
+
+CFLAGS   = +aos68k $(INCLUDES) $(TIMEVAL_DEFS) -O2 -sc -c99 -cpu=68000
+#CFLAGS  += -DDEBUG
+LFLAGS   = -lamiga
+#LFLAGS  += -ldebug
 
 all: BlueSCSIToolbox CDChanger SDTransfer
 
@@ -37,14 +57,15 @@ ZuluSCSIlogo.o: ZuluSCSIlogo.c
 	$(CC) $(CFLAGS) -c ZuluSCSIlogo.c
 
 clean:
-	del -f $(OBJS) BlueSCSIToolbox CDChanger
+	$(RM) -f $(OBJS) BlueSCSIToolbox CDChanger
 
 release:
-	del /q ..\dist\*.*
-	copy CDChanger ..\dist
-	copy CDChanger.info ..\dist
-	copy SDTransfer ..\dist
-	copy SDTransfer.info ..\dist
-	copy ..\LICENSE.txt ..\dist
-	copy BlueSCSIToolbox ..\dist
+	$(MKDIR)
+	$(RM) -f $(DISTDIR)$(PATHSEP)*
+	$(CP) CDChanger $(DISTDIR)
+	$(CP) CDChanger.info $(DISTDIR)
+	$(CP) SDTransfer $(DISTDIR)
+	$(CP) SDTransfer.info $(DISTDIR)
+	$(CP) ..$(PATHSEP)LICENSE.txt $(DISTDIR)
+	$(CP) BlueSCSIToolbox $(DISTDIR)
 

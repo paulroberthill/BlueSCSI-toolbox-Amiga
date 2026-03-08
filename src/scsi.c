@@ -34,11 +34,24 @@ int scsi_isCD;
 int scsi_isBlueSCSI;
 int scsi_isZuluSCSI;
 int scsi_isRemovable;
+UBYTE scsi_apiVersion;
+UBYTE scsi_capabilities;
 
-struct FileEntry *files = NULL; 
+struct FileEntry *files = NULL;
 int filecount = 0;
 
 int Toolbox_InitDevice(void);
+int Toolbox_GetCapabilities(void);
+static int Toolbox_InquiryHasName(const char *name);
+
+static unsigned long long Toolbox_ParseEntrySize(const UBYTE *entry)
+{
+   return ((unsigned long long)entry[35] << 32)
+      | ((unsigned long long)entry[36] << 24)
+      | ((unsigned long long)entry[37] << 16)
+      | ((unsigned long long)entry[38] << 8)
+      | (unsigned long long)entry[39];
+}
 
 /* Setup the SCSI device */
 int scsi_setup(char *scsi_dev, int scsi_unit)
@@ -75,6 +88,13 @@ int scsi_setup(char *scsi_dev, int scsi_unit)
       MessageBox("scsi_setup", "Error sending inquiry to device\n");
       return -1;
    }
+
+   if (Toolbox_GetCapabilities() != 0 && !scsi_isBlueSCSI && !scsi_isZuluSCSI)
+   {
+      MessageBox("scsi_setup", "Toolbox API not available on this device\n");
+      return -1;
+   }
+
    return 0;
 }
 
@@ -132,13 +152,62 @@ int Toolbox_InitDevice(void)
 
    if (scsi_cmd->scsi_Actual)
    {
-      scsi_isCD = (scsi_data[0] & 0x1F) ? 0x05 : 0x00;
+      scsi_isCD = (scsi_data[0] & 0x1F) == 0x05;
       scsi_isRemovable = (scsi_data[1] & 0x80) ? 1 : 0;
-      scsi_isBlueSCSI = (scsi_isRemovable == 1) && Strnicmp("BlueSCSI", &scsi_data[8], 8) == 0; //!
-      scsi_isZuluSCSI = (scsi_isRemovable == 1) && Strnicmp("ZuluSCSI", &scsi_data[8], 8) == 0; //!
+      scsi_isBlueSCSI = Strnicmp("BlueSCSI", &scsi_data[8], 8) == 0;
+      scsi_isZuluSCSI = Strnicmp("ZuluSCSI", &scsi_data[8], 8) == 0;
+      if (!scsi_isBlueSCSI && !scsi_isZuluSCSI)
+      {
+         scsi_isBlueSCSI = Toolbox_InquiryHasName("BlueSCSI");
+         scsi_isZuluSCSI = Toolbox_InquiryHasName("ZuluSCSI");
+      }
    }
 #endif
    return err;
+}
+
+static int Toolbox_InquiryHasName(const char *name)
+{
+   int i;
+
+   if (scsi_cmd->scsi_Actual < 36 + 8)
+   {
+      return 0;
+   }
+
+   for (i = 36; i <= (int)scsi_cmd->scsi_Actual - 8; i++)
+   {
+      if (Strnicmp((STRPTR)name, (STRPTR)&scsi_data[i], 8) == 0)
+      {
+         return 1;
+      }
+   }
+
+   return 0;
+}
+
+/* Query firmware API version and capability flags */
+int Toolbox_GetCapabilities(void)
+{
+   UBYTE command[] = {BLUESCSI_TOOLBOX_METADATA, BLUESCSI_TOOLBOX_SUBCMD_GET_CAPABILITIES, 0, 0, 0, 0, 0, 0, 8, 0};
+   int err;
+
+   scsi_apiVersion = 0;
+   scsi_capabilities = 0;
+
+   if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
+                        (UBYTE *)&command, sizeof(command),
+                        (SCSIF_READ | SCSIF_AUTOSENSE))) != 0)
+   {
+      return -1;
+   }
+
+   if (scsi_cmd->scsi_Actual >= 2)
+   {
+      scsi_apiVersion = scsi_data[0];
+      scsi_capabilities = scsi_data[1];
+   }
+   return 0;
 }
 
 /* Execute BLUESCSI_TOOLBOX_COUNT_CDS / BLUESCSI_TOOLBOX_COUNT_FILES */
@@ -232,19 +301,18 @@ struct FileEntry *Toolbox_List_Files(int cdrom)
 
       if (scsi_cmd->scsi_Actual)
       {
-         UBYTE *c = scsi_data;
          int f;
          for (f = 0; f < filecount; f++)
          {
-            file->Index = (int)*c++;
-            file->Type = (int)*c++;    // 0=dir 1=file
+            UBYTE *c = &scsi_data[ENTRY_SIZE * f];
+            file->Index = c[0];
+            file->Type = c[1];    // 0=dir 1=file
 
             sprintf(file->Number, "%d", f+1);
-            Strncpy(file->Name, c, 32);
+            Strncpy(file->Name, (char *)&c[2], MAX_MAC_PATH);
+            file->Name[MAX_MAC_PATH] = '\0';
 
-            c += MAX_MAC_PATH + 2;
-            file->Size = c[0] << 24 | c[1] << 16 | c[2] << 8 | c[3];
-            c += 4;
+            file->Size = Toolbox_ParseEntrySize(c);
             file++;
          }
          file->Type = -1;  // EOF
@@ -271,13 +339,13 @@ void Toolbox_Set_Next_CD(UBYTE index)
 }
 
 /* Download a file from the SD card */
-int Toolbox_Download(char *source, char *destination, void (*callback)(int))
+unsigned long long Toolbox_Download(char *source, char *destination, void (*callback)(int))
 {
-   int result = 0;
+   unsigned long long result = 0;
    if (files)
    {
       struct FileEntry *file = files;
-      int count = 0;
+      unsigned long long count = 0;
       int index = -1;
       int i;
       for (i = 0; i < filecount; i++)
@@ -290,10 +358,10 @@ int Toolbox_Download(char *source, char *destination, void (*callback)(int))
          file++;
       }
 
-      if (index >= 0 && file->Size > 0)
+      if (index >= 0)
       {
          int offset = 0; // offset in 4096 size pages
-         int size = file->Size;
+         unsigned long long size = file->Size;
          BPTR fh;
          UBYTE command[] = {BLUESCSI_TOOLBOX_GET_FILE, 0, 0, 0, 0, 0, 0, 0, 0, 0};
          command[1] = index;
@@ -306,7 +374,7 @@ int Toolbox_Download(char *source, char *destination, void (*callback)(int))
             return 0;
          }
 
-         while (1)
+         while (count < size)
          {
             int err;
             command[2] = (offset & 0xFF000000) >> 24;
@@ -323,18 +391,32 @@ int Toolbox_Download(char *source, char *destination, void (*callback)(int))
             }
 
 #ifdef TESTMODE
-            offset++;
-            count += 4096;
-            if (offset * 4096 > size)
             {
-               break;
+               unsigned long long remaining = size - count;
+               unsigned long long chunk = remaining > 4096 ? 4096 : remaining;
+
+               count += chunk;
+               offset++;
             }
 #else
             if (scsi_cmd->scsi_Actual)
             {
-               count += scsi_cmd->scsi_Actual;
+               unsigned long long remaining = size - count;
+               ULONG chunk = scsi_cmd->scsi_Actual;
+
+               if ((unsigned long long)chunk > remaining)
+               {
+                  chunk = (ULONG)remaining;
+               }
+
+               if (chunk == 0)
+               {
+                  break;
+               }
+
+               count += chunk;
                offset++;
-               Write(fh, scsi_data, scsi_cmd->scsi_Actual);
+               Write(fh, scsi_data, chunk);
             }
             else
             {
@@ -342,15 +424,22 @@ int Toolbox_Download(char *source, char *destination, void (*callback)(int))
             }
 #endif
 
-            if (callback && (offset % 16 == 0))
+            if (callback && (count == size || (offset % 16 == 0)))
             {
                // Update progress every 64k
-               int pc = (offset*100)/(size / 4096);
+               int pc = size ? (int)((count * 100ULL) / size) : 100;
+               if (pc > 100)
+               {
+                  pc = 100;
+               }
                callback(pc);
             }
          }
          Close(fh);
-         if (callback) callback(100);
+         if (callback && count == size)
+         {
+            callback(100);
+         }
          result = count;
       }
       else
