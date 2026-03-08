@@ -17,7 +17,9 @@ MKDIR    = mkdir -p $(DISTDIR)
 PATHSEP  = /
 endif
 
-CFLAGS   = +aos68k $(INCLUDES) -O2 -sc -c99 -cpu=68000
+TIMEVAL_DEFS = -D__USE_NEW_TIMEVAL__ -Dtimeval=TimeVal -Dtimerequest=TimeRequest -Dtv_sec=tv_secs -Dtv_usec=tv_micro
+
+CFLAGS   = +aos68k $(INCLUDES) $(TIMEVAL_DEFS) -O2 -sc -c99 -cpu=68000
 #CFLAGS  += -DDEBUG
 LFLAGS   = -lamiga
 #LFLAGS  += -ldebug
