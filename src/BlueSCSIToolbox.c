@@ -40,6 +40,7 @@
 
 // from BlueSCSI_Toolbox.cpp
 #define MAX_MAC_PATH 32
+#define ENTRY_SIZE 40
 
 static const char ver[] = "$VER: BlueSCSIToolbox 1.2 (18.5.2024)";
 
@@ -495,22 +496,17 @@ int Toolbox_List_Files(int cdrom)
 
    if (scsi_cmd->scsi_Actual)
    {
-      UBYTE *c = scsi_data;
       struct FileEntry *file = files;
       int f;
       for (f = 0; f < filecount; f++)
       {
-         unsigned int size;
-         file->Index = (int)*c++;
-         file->Type = (int)*c++; // 1=file 0=dir
-
-         strncpy(file->Name, c, 32);
-
-         c += MAX_MAC_PATH + 2;
-         size = c[0] << 24 | c[1] << 16 | c[2] << 8 | c[3];
-         c += 4;
-
-         file->Size = size;
+         UBYTE *c = &scsi_data[ENTRY_SIZE * f];
+         file->Index = c[0];
+         file->Type = c[1]; // 1=file 0=dir
+         strncpy(file->Name, (char *)&c[2], MAX_MAC_PATH);
+         file->Name[MAX_MAC_PATH] = '\0';
+         // Size is 5 bytes at offset 35; skip high byte, read lower 32 bits
+         file->Size = (c[36] << 24) | (c[37] << 16) | (c[38] << 8) | c[39];
          file++;
       }
 

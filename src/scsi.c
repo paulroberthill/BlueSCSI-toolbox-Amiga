@@ -232,19 +232,19 @@ struct FileEntry *Toolbox_List_Files(int cdrom)
 
       if (scsi_cmd->scsi_Actual)
       {
-         UBYTE *c = scsi_data;
          int f;
          for (f = 0; f < filecount; f++)
          {
-            file->Index = (int)*c++;
-            file->Type = (int)*c++;    // 0=dir 1=file
+            UBYTE *c = &scsi_data[ENTRY_SIZE * f];
+            file->Index = c[0];
+            file->Type = c[1];    // 0=dir 1=file
 
             sprintf(file->Number, "%d", f+1);
-            Strncpy(file->Name, c, 32);
+            Strncpy(file->Name, (char *)&c[2], MAX_MAC_PATH);
+            file->Name[MAX_MAC_PATH] = '\0';
 
-            c += MAX_MAC_PATH + 2;
-            file->Size = c[0] << 24 | c[1] << 16 | c[2] << 8 | c[3];
-            c += 4;
+            // Size is 5 bytes at offset 35; skip high byte, read lower 32 bits
+            file->Size = (c[36] << 24) | (c[37] << 16) | (c[38] << 8) | c[39];
             file++;
          }
          file->Type = -1;  // EOF

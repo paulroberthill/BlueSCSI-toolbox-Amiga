@@ -33,6 +33,7 @@
 
 // from BlueSCSI_Toolbox.cpp
 #define MAX_MAC_PATH 32
+#define ENTRY_SIZE 40
 
 #define SCSI_CMD_INQ 0x12
 
