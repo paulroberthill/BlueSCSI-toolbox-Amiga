@@ -298,7 +298,7 @@ int main(int argc, char* argv[])
          }
          else
          {
-            Toolbox_Next_CD(nextcd);
+            Toolbox_Next_CD(files[nextcd - 1].Index);
             DiskChange();
          }
       }
@@ -421,13 +421,12 @@ void Toolbox_Show_files(void)
    }
 }
 
-/* Select CD image 'n'
-   First CD is 1 */
+/* Select a CD image by its toolbox index. */
 void Toolbox_Next_CD(int index)
 {
    UBYTE command[] = {BLUESCSI_TOOLBOX_SET_NEXT_CD, 0, 0, 0, 0, 0, 0, 0, 0, 0};
    int err;
-   command[1] = index - 1;
+   command[1] = index;
    if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
                         (UBYTE *)&command, sizeof(command),
                         (SCSIF_READ | SCSIF_AUTOSENSE))) != 0)
