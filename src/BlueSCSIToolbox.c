@@ -34,7 +34,16 @@
 #define BLUESCSI_TOOLBOX_LIST_CDS 0xD7
 #define BLUESCSI_TOOLBOX_SET_NEXT_CD 0xD8
 #define BLUESCSI_TOOLBOX_LIST_DEVICES 0xD9
+#define BLUESCSI_TOOLBOX_METADATA 0xD9
 #define BLUESCSI_TOOLBOX_COUNT_CDS 0xDA
+
+// 0xD9 Metadata subcommands (CDB[1])
+#define BLUESCSI_TOOLBOX_SUBCMD_LIST_DEVICES 0x00
+#define BLUESCSI_TOOLBOX_SUBCMD_GET_CAPABILITIES 0x01
+
+// Capability flags
+#define BLUESCSI_TOOLBOX_CAP_LARGE_TRANSFERS 0x01
+#define BLUESCSI_TOOLBOX_CAP_LARGE_SEND 0x02
 
 #define SCSI_CMD_INQ 0x12
 
@@ -42,10 +51,11 @@
 #define MAX_MAC_PATH 32
 #define ENTRY_SIZE 40
 
-static const char ver[] = "$VER: BlueSCSIToolbox 1.2 (18.5.2024)";
+static const char ver[] = "$VER: BlueSCSIToolbox 1.3 (7.3.2026)";
 
 int Toolbox_List_Files(int cdrom);
 int Toolbox_List_Devices(void);
+int Toolbox_GetCapabilities(void);
 int Toolbox_Count_Files(int cdrom);
 int Toolbox_GetFileByName(char *destination, char *source);
 int Toolbox_PutFileByName(char *destination, char *source);
@@ -71,6 +81,8 @@ LONG scsi_removable;
 LONG scsi_isCD;
 LONG scsi_isBlueSCSI;
 LONG scsi_isZuluSCSI;
+UBYTE scsi_apiVersion;
+UBYTE scsi_capabilities;
 
 UBYTE scsi_dev[1024];
 LONG scsi_id = 0;
@@ -90,7 +102,7 @@ struct FileEntry *files = NULL;
 int filecount = 0;
 
 // ReadArgs template
-char *template = "DEVICE/K,UNIT/K/N,DIR=LIST/S,SEND/K,RECEIVE/K,LISTDEVICES/S,LISTCDS/S,SETCD/K/N,SETDEBUG/K/N";
+char *template = "DEVICE/K,UNIT/K/N,DIR=LIST/S,SEND/K,RECEIVE/K,LISTDEVICES/S,LISTCDS/S,SETCD/K/N,SETDEBUG/K/N,INFO/S";
 
 enum ToolboxCommand
 {
@@ -101,7 +113,8 @@ enum ToolboxCommand
    TOOLBOX_LISTDEVICES,
    TOOLBOX_LISTCDS,
    TOOLBOX_SETCD,
-   TOOLBOX_SETDEBUG
+   TOOLBOX_SETDEBUG,
+   TOOLBOX_INFO
 };
 
 enum ToolboxParams
@@ -114,7 +127,8 @@ enum ToolboxParams
    LISTDEVICES,
    LISTCDS,
    SETCD,
-   SETDEBUG
+   SETDEBUG,
+   INFO
 };
 
 int main(int argc, char* argv[])
@@ -122,7 +136,7 @@ int main(int argc, char* argv[])
    struct RDArgs *rd;
    enum ToolboxCommand toolboxCommand = TOOLBOX_NONE;
    char filename[256];
-   LONG params[] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+   LONG params[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
    LONG nextcd;
    LONG debugon;
    
@@ -173,6 +187,10 @@ int main(int argc, char* argv[])
       {
          toolboxCommand = TOOLBOX_SETDEBUG;
          debugon = (*((LONG *)params[SETDEBUG]));
+      }
+      if (params[INFO])
+      {
+         toolboxCommand = TOOLBOX_INFO;
       }
       FreeArgs(rd);
    }
@@ -230,8 +248,16 @@ int main(int argc, char* argv[])
    }
    if (!scsi_isBlueSCSI && !scsi_isZuluSCSI)
    {
-      PutStr("Not a BlueSCSI or ZuluSCSI device\n");
-      goto exit;
+      // Vendor string may be overridden in ini; try capabilities query
+      if (Toolbox_GetCapabilities() != 0)
+      {
+         PutStr("Not a BlueSCSI or ZuluSCSI device\n");
+         goto exit;
+      }
+   }
+   else
+   {
+      Toolbox_GetCapabilities();
    }
 
    switch (toolboxCommand)
@@ -283,6 +309,15 @@ int main(int argc, char* argv[])
       break;
    case TOOLBOX_SETDEBUG:
       Toolbox_Debug(debugon);
+      break;
+   case TOOLBOX_INFO:
+      Printf("Toolbox API version: %ld\n", (LONG)scsi_apiVersion);
+      Printf("Capabilities: 0x%02lx\n", (LONG)scsi_capabilities);
+      if (scsi_capabilities & BLUESCSI_TOOLBOX_CAP_LARGE_TRANSFERS)
+         PutStr("  Large transfers supported\n");
+      if (scsi_capabilities & BLUESCSI_TOOLBOX_CAP_LARGE_SEND)
+         PutStr("  Large send supported\n");
+      Toolbox_List_Devices();
       break;
    }
 
@@ -435,14 +470,50 @@ int Toolbox_Count_Files(int cdrom)
    return count;
 }
 
-/* Devices that are active on this SCSI device.
-   Does not seem to return anything? */
+/* Query firmware API version and capability flags */
+int Toolbox_GetCapabilities(void)
+{
+   UBYTE command[] = {BLUESCSI_TOOLBOX_METADATA, BLUESCSI_TOOLBOX_SUBCMD_GET_CAPABILITIES, 0, 0, 0, 0, 0, 0, 8, 0};
+   int err;
+
+   scsi_apiVersion = 0;
+   scsi_capabilities = 0;
+
+   if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
+                        (UBYTE *)&command, sizeof(command),
+                        (SCSIF_READ | SCSIF_AUTOSENSE))) != 0)
+   {
+      return -1;
+   }
+
+   if (scsi_cmd->scsi_Actual >= 2)
+   {
+      scsi_apiVersion = scsi_data[0];
+      scsi_capabilities = scsi_data[1];
+   }
+   return 0;
+}
+
+static const char *deviceTypeName(UBYTE type)
+{
+   switch (type)
+   {
+   case 0: return "Hard disk";
+   case 2: return "CD-ROM";
+   case 5: return "Tape";
+   case 6: return "Network";
+   case 0xFF: return "Not enabled";
+   default: return "Unknown";
+   }
+}
+
+/* List active SCSI devices via metadata subcommand */
 int Toolbox_List_Devices(void)
 {
-   // 0xD9 BLUESCSI_TOOLBOX_LIST_DEVICES
-   UBYTE command[] = {BLUESCSI_TOOLBOX_LIST_DEVICES, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+   UBYTE command[] = {BLUESCSI_TOOLBOX_METADATA, BLUESCSI_TOOLBOX_SUBCMD_LIST_DEVICES, 0, 0, 0, 0, 0, 0, 8, 0};
    int err;
-   
+   int i;
+
    if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
                         (UBYTE *)&command, sizeof(command),
                         (SCSIF_READ | SCSIF_AUTOSENSE))) != 0)
@@ -451,12 +522,17 @@ int Toolbox_List_Devices(void)
       return -1;
    }
 
-#if DEBUG
    if (scsi_cmd->scsi_Actual)
    {
-      dump("Toolbox_List_Devices", scsi_data, scsi_cmd->scsi_Actual);
+      PutStr("SCSI Devices:\n");
+      for (i = 0; i < (int)scsi_cmd->scsi_Actual; i++)
+      {
+         if (scsi_data[i] != 0xFF)
+         {
+            Printf("  ID %ld: %s (%ld)\n", (LONG)i, deviceTypeName(scsi_data[i]), (LONG)scsi_data[i]);
+         }
+      }
    }
-#endif
 
    return 0;
 }

@@ -34,11 +34,14 @@ int scsi_isCD;
 int scsi_isBlueSCSI;
 int scsi_isZuluSCSI;
 int scsi_isRemovable;
+UBYTE scsi_apiVersion;
+UBYTE scsi_capabilities;
 
-struct FileEntry *files = NULL; 
+struct FileEntry *files = NULL;
 int filecount = 0;
 
 int Toolbox_InitDevice(void);
+int Toolbox_GetCapabilities(void);
 
 /* Setup the SCSI device */
 int scsi_setup(char *scsi_dev, int scsi_unit)
@@ -75,6 +78,9 @@ int scsi_setup(char *scsi_dev, int scsi_unit)
       MessageBox("scsi_setup", "Error sending inquiry to device\n");
       return -1;
    }
+
+   Toolbox_GetCapabilities();
+
    return 0;
 }
 
@@ -139,6 +145,30 @@ int Toolbox_InitDevice(void)
    }
 #endif
    return err;
+}
+
+/* Query firmware API version and capability flags */
+int Toolbox_GetCapabilities(void)
+{
+   UBYTE command[] = {BLUESCSI_TOOLBOX_METADATA, BLUESCSI_TOOLBOX_SUBCMD_GET_CAPABILITIES, 0, 0, 0, 0, 0, 0, 8, 0};
+   int err;
+
+   scsi_apiVersion = 0;
+   scsi_capabilities = 0;
+
+   if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
+                        (UBYTE *)&command, sizeof(command),
+                        (SCSIF_READ | SCSIF_AUTOSENSE))) != 0)
+   {
+      return -1;
+   }
+
+   if (scsi_cmd->scsi_Actual >= 2)
+   {
+      scsi_apiVersion = scsi_data[0];
+      scsi_capabilities = scsi_data[1];
+   }
+   return 0;
 }
 
 /* Execute BLUESCSI_TOOLBOX_COUNT_CDS / BLUESCSI_TOOLBOX_COUNT_FILES */
