@@ -645,6 +645,7 @@ unsigned long long Toolbox_GetFileByName(char *destination, char *source)
    if (index >= 0)
    {
       int offset = 0; // offset in 4096 size pages
+      unsigned long long size = file->Size;
       char size_text[32];
       UBYTE command[] = {BLUESCSI_TOOLBOX_GET_FILE, 0, 0, 0, 0, 0, 0, 0, 0, 0};
       BPTR fh;
@@ -658,7 +659,7 @@ unsigned long long Toolbox_GetFileByName(char *destination, char *source)
          return 0;
       }
 
-      while (1)
+      while (count < size)
       {
          int err;
          command[2] = (offset & 0xFF000000) >> 24;
@@ -676,9 +677,22 @@ unsigned long long Toolbox_GetFileByName(char *destination, char *source)
 
          if (scsi_cmd->scsi_Actual)
          {
-            count += scsi_cmd->scsi_Actual;
+            unsigned long long remaining = size - count;
+            ULONG chunk = scsi_cmd->scsi_Actual;
+
+            if ((unsigned long long)chunk > remaining)
+            {
+               chunk = (ULONG)remaining;
+            }
+
+            if (chunk == 0)
+            {
+               break;
+            }
+
+            count += chunk;
             offset++;
-            Write(fh, scsi_data, scsi_cmd->scsi_Actual);
+            Write(fh, scsi_data, chunk);
          }
          else
          {

@@ -328,7 +328,7 @@ unsigned long long Toolbox_Download(char *source, char *destination, void (*call
          file++;
       }
 
-      if (index >= 0 && file->Size > 0)
+      if (index >= 0)
       {
          int offset = 0; // offset in 4096 size pages
          unsigned long long size = file->Size;
@@ -344,7 +344,7 @@ unsigned long long Toolbox_Download(char *source, char *destination, void (*call
             return 0;
          }
 
-         while (1)
+         while (count < size)
          {
             int err;
             command[2] = (offset & 0xFF000000) >> 24;
@@ -361,18 +361,32 @@ unsigned long long Toolbox_Download(char *source, char *destination, void (*call
             }
 
 #ifdef TESTMODE
-            offset++;
-            count += 4096;
-            if (offset * 4096 > size)
             {
-               break;
+               unsigned long long remaining = size - count;
+               unsigned long long chunk = remaining > 4096 ? 4096 : remaining;
+
+               count += chunk;
+               offset++;
             }
 #else
             if (scsi_cmd->scsi_Actual)
             {
-               count += scsi_cmd->scsi_Actual;
+               unsigned long long remaining = size - count;
+               ULONG chunk = scsi_cmd->scsi_Actual;
+
+               if ((unsigned long long)chunk > remaining)
+               {
+                  chunk = (ULONG)remaining;
+               }
+
+               if (chunk == 0)
+               {
+                  break;
+               }
+
+               count += chunk;
                offset++;
-               Write(fh, scsi_data, scsi_cmd->scsi_Actual);
+               Write(fh, scsi_data, chunk);
             }
             else
             {
@@ -380,10 +394,10 @@ unsigned long long Toolbox_Download(char *source, char *destination, void (*call
             }
 #endif
 
-            if (callback && (offset % 16 == 0))
+            if (callback && (count == size || (offset % 16 == 0)))
             {
                // Update progress every 64k
-               int pc = (int)(((unsigned long long)offset * 4096ULL * 100ULL) / size);
+               int pc = size ? (int)((count * 100ULL) / size) : 100;
                if (pc > 100)
                {
                   pc = 100;
@@ -392,7 +406,10 @@ unsigned long long Toolbox_Download(char *source, char *destination, void (*call
             }
          }
          Close(fh);
-         if (callback) callback(100);
+         if (callback && count == size)
+         {
+            callback(100);
+         }
          result = count;
       }
       else
