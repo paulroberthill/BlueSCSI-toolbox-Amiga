@@ -7,11 +7,13 @@ ifeq ($(OS),Windows_NT)
 INCLUDES = "-ID:\Amiga\Include_H"
 RM       = del
 CP       = copy
+MKDIR    = if not exist $(DISTDIR) mkdir $(DISTDIR)
 PATHSEP  = \\
 else
 INCLUDES = -I/opt/amiga/m68k-amigaos/ndk-include -I/opt/amiga/m68k-amigaos/vbcc/include
 RM       = rm
 CP       = cp
+MKDIR    = mkdir -p $(DISTDIR)
 PATHSEP  = /
 endif
 
@@ -56,6 +58,7 @@ clean:
 	$(RM) -f $(OBJS) BlueSCSIToolbox CDChanger
 
 release:
+	$(MKDIR)
 	$(RM) -f $(DISTDIR)$(PATHSEP)*
 	$(CP) CDChanger $(DISTDIR)
 	$(CP) CDChanger.info $(DISTDIR)
