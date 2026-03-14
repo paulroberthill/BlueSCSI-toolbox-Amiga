@@ -110,12 +110,12 @@ int main(int argc, char **argv)
    APTR windowObj;
    Object *listBrowser;
 
-   if ((IntuitionBase = (struct IntuitionBase *) OpenLibrary("intuition.library", 33L)) == NULL)
+   if ((IntuitionBase = (struct IntuitionBase *) OpenLibrary("intuition.library", 40L)) == NULL)
    {
       PutStr("Could not open intuition.library\n");
       goto exit;
    }
-   if ((WindowBase = OpenLibrary("window.class", 0)) == NULL)
+   if ((WindowBase = OpenLibrary("window.class", 42L)) == NULL)
    {
       MessageBox(appname, "Could not open window.class\n");
       goto exit;
@@ -125,27 +125,27 @@ int main(int argc, char **argv)
       MessageBox(appname, "Could not open utility.library\n");
       goto exit;
    }
-   if ((AslBase = OpenLibrary("asl.library", 44L)) == NULL)
+   if ((AslBase = OpenLibrary("asl.library", 40L)) == NULL)
    {
       MessageBox(appname, "Could not open asl.library\n");
       goto exit;
    }
-   if ((ListBrowserBase = OpenLibrary("gadgets/listbrowser.gadget", 44)) == NULL)
+   if ((ListBrowserBase = OpenLibrary("gadgets/listbrowser.gadget", 42L)) == NULL)
    {
       MessageBox(appname, "Could not open listbrowser.gadget");
       goto exit;
    }
-   if ((LayoutBase = OpenLibrary("gadgets/layout.gadget", 44)) == NULL)
+   if ((LayoutBase = OpenLibrary("gadgets/layout.gadget", 42L)) == NULL)
    {
       MessageBox(appname, "Could not open layout.gadget");
       goto exit;
    }
-   if ((LabelBase = OpenLibrary("images/label.image", 44)) == NULL)
+   if ((LabelBase = OpenLibrary("images/label.image", 41L)) == NULL)
    {
       MessageBox(appname, "Could not open label.image");
       goto exit;
    }
-   if ((FuelGaugeBase = OpenLibrary("gadgets/fuelgauge.gadget", 44)) == NULL)
+   if ((FuelGaugeBase = OpenLibrary("gadgets/fuelgauge.gadget", 41L)) == NULL)
    {
       MessageBox(appname, "Could not open fuelgauge.gadget");
       goto exit;
@@ -158,7 +158,7 @@ int main(int argc, char **argv)
    if (argc==0)
    {
       // Started from Workbench. Read tooltypes
-      if ((IconBase = OpenLibrary("icon.library", 33)) != NULL)
+      if ((IconBase = OpenLibrary("icon.library", 40L)) != NULL)
       {
          struct WBStartup *WBenchMsg = (struct WBStartup *)argv;
          struct WBArg *wbarg;
