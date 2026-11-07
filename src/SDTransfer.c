@@ -262,7 +262,7 @@ int main(int argc, char **argv)
    }
    else
    {
-      goto exit;
+      MessageBox(appname, "No files found");
    }
 
    sprintf(scsi_msg, "Device:%s Unit:%ld", scsi_dev, scsi_unit);

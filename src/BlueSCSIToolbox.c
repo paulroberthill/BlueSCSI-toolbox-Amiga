@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2024 Paul Hill
+ * Copyright (C) 2026 Paul Hill
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include <proto/utility.h>
 #include <stdlib.h>
 #include <string.h>
+#include "toolbox.h"
 
 #define BLUESCSI_TOOLBOX_COUNT_FILES 0xD2
 #define BLUESCSI_TOOLBOX_LIST_FILES 0xD0
@@ -37,10 +38,6 @@
 #define BLUESCSI_TOOLBOX_METADATA 0xD9
 #define BLUESCSI_TOOLBOX_COUNT_CDS 0xDA
 
-// 0xD9 Metadata subcommands (CDB[1])
-#define BLUESCSI_TOOLBOX_SUBCMD_LIST_DEVICES 0x00
-#define BLUESCSI_TOOLBOX_SUBCMD_GET_CAPABILITIES 0x01
-
 // Capability flags
 #define BLUESCSI_TOOLBOX_CAP_LARGE_TRANSFERS 0x01
 #define BLUESCSI_TOOLBOX_CAP_LARGE_SEND 0x02
@@ -53,8 +50,9 @@
 
 static const char ver[] = "$VER: BlueSCSIToolbox 1.3 (7.3.2026)";
 
-int Toolbox_List_Files(int cdrom);
+//int Toolbox_List_Files(int cdrom);
 int Toolbox_List_Devices(void);
+int Toolbox_Show_Mac(void);
 int Toolbox_GetCapabilities(void);
 int Toolbox_Count_Files(int cdrom);
 unsigned long long Toolbox_GetFileByName(char *destination, char *source);
@@ -63,6 +61,7 @@ int Toolbox_List_CDs(void);
 void Toolbox_Show_files(void);
 void Toolbox_Next_CD(int index);
 void Toolbox_Debug(int debugon);
+char *Toolbox_Get_Working_Dir();
 
 void dump(char *msg, UBYTE *d, int len);
 void DiskChange(void);
@@ -82,8 +81,8 @@ struct Library *UtilityBase = NULL;
 
 LONG scsi_removable;
 LONG scsi_isCD;
-LONG scsi_isBlueSCSI;
-LONG scsi_isZuluSCSI;
+int scsi_isBlueSCSI;
+int scsi_isZuluSCSI;
 UBYTE scsi_apiVersion;
 UBYTE scsi_capabilities;
 
@@ -93,19 +92,13 @@ LONG scsi_id = 0;
 #define SENSE_LEN 252
 #define MAX_DATA_LEN 4096
 
-struct FileEntry
-{
-   int Index;
-   unsigned long long Size;
-   int Type;
-   char Name[32 + 1];
-};
+char dir_name[MAX_FILE_PATH] = {0};
 
 struct FileEntry *files = NULL;
 int filecount = 0;
 
 // ReadArgs template
-char *template = "DEVICE/K,UNIT/K/N,DIR=LIST/S,SEND/K,RECEIVE/K,LISTDEVICES/S,LISTCDS/S,SETCD/K/N,SETDEBUG/K/N,INFO/S";
+char *template = "DEVICE/K,UNIT/K/N,DIR=LIST/S,SEND/K,RECEIVE/K,LISTDEVICES/S,LISTCDS/S,SETCD/K/N,SETDEBUG/K/N,INFO/S,GETWORKINGDIR/S";
 
 enum ToolboxCommand
 {
@@ -117,7 +110,8 @@ enum ToolboxCommand
    TOOLBOX_LISTCDS,
    TOOLBOX_SETCD,
    TOOLBOX_SETDEBUG,
-   TOOLBOX_INFO
+   TOOLBOX_INFO,
+   TOOLBOX_GET_WORKING_DIR
 };
 
 enum ToolboxParams
@@ -131,7 +125,8 @@ enum ToolboxParams
    LISTCDS,
    SETCD,
    SETDEBUG,
-   INFO
+   INFO,
+   GET_WORKING_DIR
 };
 
 int main(int argc, char* argv[])
@@ -140,7 +135,7 @@ int main(int argc, char* argv[])
    enum ToolboxCommand toolboxCommand = TOOLBOX_NONE;
    int capabilities_ok;
    char filename[256];
-   LONG params[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+   LONG params[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
    LONG nextcd;
    LONG debugon;
    
@@ -148,8 +143,7 @@ int main(int argc, char* argv[])
    {
       goto exit;
    }
-
-   rd = ReadArgs(template, params, NULL);
+rd = ReadArgs(template, params, NULL);
    if (rd)
    {
       if (params[DEVICE])
@@ -195,6 +189,10 @@ int main(int argc, char* argv[])
       if (params[INFO])
       {
          toolboxCommand = TOOLBOX_INFO;
+      }
+      if (params[GET_WORKING_DIR])
+      {
+         toolboxCommand = TOOLBOX_GET_WORKING_DIR;
       }
       FreeArgs(rd);
    }
@@ -315,6 +313,10 @@ int main(int argc, char* argv[])
       if (scsi_capabilities & BLUESCSI_TOOLBOX_CAP_LARGE_SEND)
          PutStr("  Large send supported\n");
       Toolbox_List_Devices();
+      Toolbox_Show_Mac();
+      break;
+   case TOOLBOX_GET_WORKING_DIR:
+      Printf("Working Dir: %s\n", Toolbox_Get_Working_Dir());
       break;
    }
 
@@ -592,6 +594,33 @@ int Toolbox_List_Devices(void)
    return 0;
 }
 
+/* List active SCSI devices via metadata subcommand */
+int Toolbox_Show_Mac(void)
+{
+#define SCSI_NETWORK_WIFI_CMD				0x1c	
+#define SCSI_NETWORK_WIFI_OPT_GETMACADDRESS 0x09
+
+   UBYTE command[] = {SCSI_NETWORK_WIFI_CMD, SCSI_NETWORK_WIFI_OPT_GETMACADDRESS, 0, 0, 252, 0};
+   int err;
+   int i;
+   if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
+                        (UBYTE *)&command, sizeof(command),
+                        (SCSIF_READ | SCSIF_AUTOSENSE))) != 0)
+   {
+      Printf("SCSI error %ld\n", err);
+      return -1;
+   }
+
+   PutStr("Mac Address:\n");
+   Printf("scsi_cmd->scsi_Actual %ld\n", scsi_cmd->scsi_Actual);
+   for (i = 0; i < (int)scsi_cmd->scsi_Actual; i++)
+   {
+      Printf("[%x]\n", scsi_data[i]);
+   }
+
+   return 0;
+}
+
 /* Used for sorting dirs/files */
 int FileCompare(const void *s1, const void *s2)
 {
@@ -604,7 +633,7 @@ int FileCompare(const void *s1, const void *s2)
 }
 
 /* List the files in the shared folder / CD images */
-int Toolbox_List_Files(int cdrom)
+struct FileEntry *Toolbox_List_Files(int cdrom)
 {
    UBYTE command[] = {BLUESCSI_TOOLBOX_LIST_FILES, 0, 0, 0, 0, 0, 0, 0, 0, 0};
    int err;
@@ -622,7 +651,7 @@ int Toolbox_List_Files(int cdrom)
                         (SCSIF_READ | SCSIF_AUTOSENSE))) != 0)
    {
       Printf("SCSI error %ld\n", err);
-      return -1;
+      return NULL;
    }
 
    if (scsi_cmd->scsi_Actual)
@@ -642,7 +671,7 @@ int Toolbox_List_Files(int cdrom)
 
       qsort(files, filecount, sizeof(struct FileEntry), FileCompare);
    }
-   return 0;
+   return NULL;
 }
 
 /* Copy a file from the shared folder to a destination */
@@ -825,15 +854,33 @@ void Toolbox_Debug(int debugon)
    }
 }
 
+char *Toolbox_Get_Working_Dir()
+{
+   UBYTE command[] = {BLUESCSI_TOOLBOX_METADATA, TOOLBOX_SUBCMD_GET_WORKING_DIR, 0, 0, 0, 0, 0, 0, 8, 0};
+   int err;
+
+   if ((err = DoScsiCmd((UBYTE *)scsi_data, MAX_DATA_LEN,
+                        (UBYTE *)&command, sizeof(command),
+                        (SCSIF_READ | SCSIF_AUTOSENSE))) != 0)
+   {
+      Printf("SCSI error %ld\n", err);
+      return NULL;
+   }
+
+   if (scsi_cmd->scsi_Actual)
+   {
+      strncpy(dir_name, scsi_data, (int)scsi_cmd->scsi_Actual);
+      dir_name[(int)scsi_cmd->scsi_Actual-1] = '\0';
+   }
+   return dir_name;
+}
+
 /* Send a SCSI command */
 int DoScsiCmd(UBYTE *data, int datasize, UBYTE *cmd, int cmdsize, UBYTE flags)
 {
    io_ptr->io_Length = sizeof(struct SCSICmd);
    io_ptr->io_Data = scsi_cmd;
    io_ptr->io_Command = HD_SCSICMD;
-
-//Printf("io_ptr->io_Flags=%lx\n", io_ptr->io_Flags);
-//   io_ptr->io_Flags = 0;
 
    scsi_cmd->scsi_Data = (UWORD *)data;
    scsi_cmd->scsi_Length = datasize;
