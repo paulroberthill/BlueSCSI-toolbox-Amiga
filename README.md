@@ -15,7 +15,7 @@ The CD Changer allows you to swap between CD ISO images on your SD card on the f
 ## SD Transfer
 The SD Transfer tool allows you to transfer files from the SD card to the Amiga.
 
-![CD Changer](SDTransfer.png)
+![SD Transfer](SDTransfer.png)
 
 **History**
 * 1.1 (13.05.2024) SCSI Command Descriptor length should be 10 bytes, not 6 as per the Toolbox Developer Docs. Corrected. This may have been causing the SCSI stack to crash when selecting a non-BlueSCSI device.
