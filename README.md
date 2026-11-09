@@ -24,5 +24,6 @@ Thanks to Stefan Reinauer for adding support for the ZuluSCSI! (https://zuluscsi
 * 1.2c (18.06.2024) Removed some OS3.2 utility.library functions so older OS versions are suported. Strncpy => strncpy, Strncat => strncat.
 * 1.3 (08.08.2026) Various fixes from Stefan Reinauer. 68000 support. Chip RAM fix for the logo and others. Thanks Stefan!
 * 1.4 (14.08.2026) Support Workbench 3.1
+* 1.5 (09.11.2026) Fix the CD Changer and SD Transfer window layout on Workbench 3.1. New GETWORKINGDIR option for BlueSCSIToolbox. All programs now share one version number.
 
 BlueSCSI is copyright Eric Helgeson. The BlueSCSI name and logo used with permission.

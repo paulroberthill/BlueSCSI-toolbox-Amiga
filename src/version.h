@@ -6,7 +6,7 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#define VERSION_STRING "1.4"
+#define VERSION_STRING "1.5"
 #define VERSION_DATE   "9.11.2026"
 
 #define VERSTAG(name) "$VER: " name " " VERSION_STRING " (" VERSION_DATE ")"
