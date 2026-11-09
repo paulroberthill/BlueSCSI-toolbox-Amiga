@@ -40,9 +40,10 @@
 #include <graphics/gfx.h>
 #include <workbench/startup.h>
 #include "toolbox.h"
+#include "version.h"
 
 // TODO: Add command line usage
-static const char ver[] = "$VER: CDChanger 1.2 (18.5.2024)";
+static const char ver[] = VERSTAG("CDChanger");
 
 void GetVolumeName(void);
 void DiskChange(void);

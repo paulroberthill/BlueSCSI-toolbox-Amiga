@@ -33,19 +33,19 @@ all: BlueSCSIToolbox CDChanger SDTransfer
 BlueSCSIToolbox: BlueSCSIToolbox.o
 	$(CC) +aos68k BlueSCSIToolbox.o -o BlueSCSIToolbox $(LFLAGS)
 
-BlueSCSIToolbox.o: BlueSCSIToolbox.c
+BlueSCSIToolbox.o: BlueSCSIToolbox.c toolbox.h version.h
 	$(CC) $(CFLAGS) -c BlueSCSIToolbox.c
 
 CDChanger: CDChanger.o BlueSCSIlogo.o ZuluSCSIlogo.o scsi.o common.o
 	$(CC) +aos68k CDChanger.o -o CDChanger $(LFLAGS) BlueSCSIlogo.o ZuluSCSIlogo.o scsi.o common.o
 
-CDChanger.o: CDChanger.c BlueSCSIlogo.c ZuluSCSIlogo.c toolbox.h
+CDChanger.o: CDChanger.c BlueSCSIlogo.c ZuluSCSIlogo.c toolbox.h version.h
 	$(CC) $(CFLAGS) -c CDChanger.c
 
 SDTransfer: SDTransfer.o BlueSCSIlogo.o ZuluSCSIlogo.o scsi.o common.o
 	$(CC) +aos68k SDTransfer.o -o SDTransfer $(LFLAGS) BlueSCSIlogo.o ZuluSCSIlogo.o scsi.o common.o
 
-SDTransfer.o: SDTransfer.c BlueSCSIlogo.c ZuluSCSIlogo.c toolbox.h
+SDTransfer.o: SDTransfer.c BlueSCSIlogo.c ZuluSCSIlogo.c toolbox.h version.h
 	$(CC) $(CFLAGS) -c SDTransfer.c
 
 scsi.o: scsi.c toolbox.h

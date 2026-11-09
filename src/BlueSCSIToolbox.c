@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "toolbox.h"
+#include "version.h"
 
 #define BLUESCSI_TOOLBOX_COUNT_FILES 0xD2
 #define BLUESCSI_TOOLBOX_LIST_FILES 0xD0
@@ -48,7 +49,7 @@
 #define MAX_MAC_PATH 32
 #define ENTRY_SIZE 40
 
-static const char ver[] = "$VER: BlueSCSIToolbox 1.3 (7.3.2026)";
+static const char ver[] = VERSTAG("BlueSCSIToolbox");
 
 //int Toolbox_List_Files(int cdrom);
 int Toolbox_List_Devices(void);

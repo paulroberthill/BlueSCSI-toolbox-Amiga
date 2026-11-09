@@ -42,8 +42,9 @@
 #include <graphics/gfx.h>
 #include <workbench/startup.h>
 #include "toolbox.h"
+#include "version.h"
 
-static const char ver[] = "$VER: SDTransfer 1.2 (18.5.2024)";
+static const char ver[] = VERSTAG("SDTransfer");
 
 void FreeListBrowserNodes(void);
 BOOL AddListBrowserNode(ULONG index, STRPTR filename);
