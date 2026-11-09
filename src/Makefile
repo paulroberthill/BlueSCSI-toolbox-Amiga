@@ -1,20 +1,24 @@
 OBJS	 = BlueSCSIToolbox.o CDChanger.o BlueSCSIlogo.o ZuluSCSIlogo.o Test.o scsi.o SDTransfer.o
 CC	     = vc
 
-DISTDIR  = ../dist
+ifeq ($(OS),Windows_NT)
+PATHSEP  = \\
+else
+PATHSEP  = /
+endif
+
+DISTDIR  = ..$(PATHSEP)dist
 
 ifeq ($(OS),Windows_NT)
 INCLUDES = "-ID:\Amiga\Include_H"
-RM       = del
+RM       = del /q
 CP       = copy
 MKDIR    = if not exist $(DISTDIR) mkdir $(DISTDIR)
-PATHSEP  = \\
 else
 INCLUDES = -I/opt/amiga/m68k-amigaos/ndk-include -I/opt/amiga/m68k-amigaos/vbcc/include
-RM       = rm
+RM       = rm -f
 CP       = cp
 MKDIR    = mkdir -p $(DISTDIR)
-PATHSEP  = /
 endif
 
 TIMEVAL_DEFS = -D__USE_NEW_TIMEVAL__ -Dtimeval=TimeVal -Dtimerequest=TimeRequest -Dtv_sec=tv_secs -Dtv_usec=tv_micro
@@ -61,7 +65,7 @@ clean:
 
 release:
 	$(MKDIR)
-	$(RM) -f $(DISTDIR)$(PATHSEP)*
+	$(RM) $(DISTDIR)$(PATHSEP)*
 	$(CP) CDChanger $(DISTDIR)
 	$(CP) CDChanger.info $(DISTDIR)
 	$(CP) SDTransfer $(DISTDIR)

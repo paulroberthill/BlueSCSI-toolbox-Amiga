@@ -1,5 +1,5 @@
 /** 
- * Copyright (C) 2024 Paul Hill
+ * Copyright (C) 2026 Paul Hill
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,17 @@
 #define BLUESCSI_TOOLBOX_SUBCMD_LIST_DEVICES 0x00
 #define BLUESCSI_TOOLBOX_SUBCMD_GET_CAPABILITIES 0x01
 
+// 0xD9 Metadata subcommands (CDB[1])
+#define TOOLBOX_SUBCMD_LIST_DEVICES     0x00
+#define TOOLBOX_SUBCMD_GET_CAPABILITIES 0x01
+#define TOOLBOX_SUBCMD_SET_WORKING_DIR   0x02
+#define TOOLBOX_SUBCMD_GET_WORKING_DIR   0x03
+
+// Capability flags for TOOLBOX_SUBCMD_GET_CAPABILITIES
+#define TOOLBOX_CAP_LARGE_TRANSFERS     0x01  // Supports transfers larger than 512 bytes
+#define TOOLBOX_CAP_LARGE_SEND          0x02  // Supports large (32KB) send file chunks
+#define TOOLBOX_CAP_SET_WORKING_DIR     0x04  // Supports SET_WORKING_DIR subcommand
+
 // Capability flags
 #define BLUESCSI_TOOLBOX_CAP_LARGE_TRANSFERS 0x01
 #define BLUESCSI_TOOLBOX_CAP_LARGE_SEND 0x02
@@ -48,6 +59,7 @@
 
 // #define TESTMODE 1
 #define MAXPATH 1024
+#define MAX_FILE_PATH 64                // Maximum file name length
 
 #define BLUESCSI_FILE 1
 #define BLUESCSI_DIR 0
