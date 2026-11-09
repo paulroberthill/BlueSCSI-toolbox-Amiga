@@ -285,26 +285,32 @@ int main(int argc, char **argv)
          LAYOUT_DeferLayout, TRUE,
 
          // BlueSCSI Logo
-         LAYOUT_AddChild, VLayoutObject,
-            LAYOUT_VertAlignment, LALIGN_CENTER,
+         // Uses label.image rather than a read-only button: the V40/41
+         // button.gadget on OS3.1 ignores BUTTON_BevelStyle and draws a
+         // raised button frame around the logo.
+         LAYOUT_AddChild, HLayoutObject,
             LAYOUT_HorizAlignment, LALIGN_CENTER,
-            LAYOUT_BevelStyle, BVS_THIN,
-            LAYOUT_AddChild,
-               ButtonObject,
-               GA_Image, &logo_image,
-               GA_ReadOnly, TRUE,
-               BUTTON_BevelStyle, BVS_NONE,
-            End,
-            CHILD_MaxWidth, 200,
+            LAYOUT_AddImage,
+               LabelObject,
+                  LABEL_Image, &logo_image,
+               End,
+               CHILD_MinWidth, LOGO_WIDTH,
+               CHILD_MaxWidth, LOGO_WIDTH,
+               CHILD_MinHeight, LOGO_HEIGHT,
+               CHILD_MaxHeight, LOGO_HEIGHT,
          End,
-         CHILD_MaxHeight, 81,
-           
+         // Weight 0 = don't give this child any of the spare height.
+         // OS3.1's layout.gadget otherwise shares extra space between
+         // every child instead of handing it to the listbrowser.
+         CHILD_WeightedHeight, 0,
+
          // Current SCSI device
          LAYOUT_AddImage,
             LabelObject,
                LABEL_Text, scsi_msg,
             End,
-               
+            CHILD_WeightedHeight, 0,
+
          // ListBrowser with the CD images
          LAYOUT_AddChild, 
             listBrowser = ListBrowserObject,
@@ -314,11 +320,10 @@ int main(int argc, char **argv)
                LISTBROWSER_ColumnTitles, TRUE,
                LISTBROWSER_Labels, &gb_List,
                LISTBROWSER_VertSeparators, TRUE,
-               LISTBROWSER_Spacing, 1,
                LISTBROWSER_ShowSelected, TRUE,
                LISTBROWSER_AutoFit, TRUE,
                LISTBROWSER_Editable, FALSE,
-               LISTBROWSER_MinVisible, 5,
+               LISTBROWSER_MinVisible, 3,
             End,
 
          // Select button
@@ -330,7 +335,8 @@ int main(int argc, char **argv)
             End,
             CHILD_MinHeight, 20,
             CHILD_MaxHeight, 20,
-            
+            CHILD_WeightedHeight, 0,
+
          // Progress
          LAYOUT_AddChild, 
             fuelGauge = FuelGaugeObject,
@@ -345,8 +351,9 @@ int main(int argc, char **argv)
                FUELGAUGE_Ticks, 0,
             End,
             CHILD_MaxHeight, 20,
+            CHILD_WeightedHeight, 0,
 
-      EndGroup, 
+      EndGroup,
    EndWindow;
  
    mainWindow = (struct Window *)RA_OpenWindow(windowObj);
