@@ -1,4 +1,4 @@
-OBJS	 = BlueSCSIToolbox.o CDChanger.o BlueSCSIlogo.o ZuluSCSIlogo.o Test.o scsi.o SDTransfer.o
+OBJS	 = BlueSCSIToolbox.o CDChanger.o BlueSCSIlogo.o ZuluSCSIlogo.o common.o scsi.o SDTransfer.o
 CC	     = vc
 
 ifeq ($(OS),Windows_NT)
@@ -14,11 +14,15 @@ INCLUDES = "-ID:\Amiga\Include_H"
 RM       = del /q
 CP       = copy
 MKDIR    = if not exist $(DISTDIR) mkdir $(DISTDIR)
+MKDIRP   = if not exist $(1) mkdir $(1)
+RMTREE   = if exist $(1) rmdir /s /q $(1)
 else
 INCLUDES = -I/opt/amiga/m68k-amigaos/ndk-include -I/opt/amiga/m68k-amigaos/vbcc/include
 RM       = rm -f
 CP       = cp
 MKDIR    = mkdir -p $(DISTDIR)
+MKDIRP   = mkdir -p $(1)
+RMTREE   = rm -rf $(1)
 endif
 
 TIMEVAL_DEFS = -D__USE_NEW_TIMEVAL__ -Dtimeval=TimeVal -Dtimerequest=TimeRequest -Dtv_sec=tv_secs -Dtv_usec=tv_micro
@@ -72,4 +76,30 @@ release:
 	$(CP) SDTransfer.info $(DISTDIR)
 	$(CP) ..$(PATHSEP)LICENSE.txt $(DISTDIR)
 	$(CP) BlueSCSIToolbox $(DISTDIR)
+
+# Aminet release: stages the archive contents in ../aminet/build and packs
+# them into ../aminet/build/BlueSCSI-Toolbox.lha with LHa for UNIX (lha on
+# the PATH). Upload the .lha and the .readme from ../aminet/build.
+# Note: the 2005 Windows lha.exe cannot list its own level 2 archives
+# ("Unknown level header"), but the archives are fine; check with 7z t.
+LHA       = lha
+ARCNAME   = BlueSCSI-Toolbox
+AMINETDIR = ..$(PATHSEP)aminet
+STAGEDIR  = $(AMINETDIR)$(PATHSEP)build
+ARCDIR    = $(STAGEDIR)$(PATHSEP)$(ARCNAME)
+ARCSRCDIR = $(ARCDIR)$(PATHSEP)src
+ARCFILES  = BlueSCSIToolbox CDChanger CDChanger.info SDTransfer SDTransfer.info
+SRCFILES  = BlueSCSIToolbox.c CDChanger.c SDTransfer.c scsi.c common.c \
+            BlueSCSIlogo.c ZuluSCSIlogo.c toolbox.h version.h \
+            CDChanger.info SDTransfer.info Makefile smakefile
+
+aminet: all
+	$(call RMTREE,$(STAGEDIR))
+	$(call MKDIRP,$(ARCSRCDIR))
+	$(foreach f,$(ARCFILES),$(CP) $(f) $(ARCDIR) &&) $(CP) ..$(PATHSEP)LICENSE.txt $(ARCDIR)
+	$(CP) $(AMINETDIR)$(PATHSEP)$(ARCNAME).readme $(ARCDIR)
+	$(foreach f,$(SRCFILES),$(CP) $(f) $(ARCSRCDIR) &&) echo Source copied
+	$(CP) $(AMINETDIR)$(PATHSEP)$(ARCNAME).info $(STAGEDIR)
+	cd $(STAGEDIR) && $(LHA) aq $(ARCNAME).lha $(ARCNAME) $(ARCNAME).info
+	$(CP) $(AMINETDIR)$(PATHSEP)$(ARCNAME).readme $(STAGEDIR)
 

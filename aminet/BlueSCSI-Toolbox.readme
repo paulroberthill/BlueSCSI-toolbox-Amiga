@@ -1,0 +1,161 @@
+Short:        BlueSCSI/ZuluSCSI CD changer & SD tools
+Author:       Paul Hill
+Uploader:     paul@codedbad.co.uk (Paul Hill)
+Type:         hard/misc
+Version:      1.5
+Architecture: m68k-amigaos >= 3.1.0
+Requires:     ReAction classes V42+ for the GUI tools
+Distribution: Aminet
+
+Tools for using the Toolbox features of a BlueSCSI V2 or ZuluSCSI SD card
+SCSI emulator in a Commodore Amiga.
+
+  CDChanger        Swap between the CD images on the SD card without
+                   powering off or removing the card.
+  SDTransfer       Copy files from the SD card to the Amiga.
+  BlueSCSIToolbox  CLI tool for the same features, plus sending files
+                   to the SD card.
+
+All three run on a plain 68000.
+
+Source code (vbcc and SAS/C) is included in the src drawer and is also on
+GitHub: https://github.com/paulroberthill/BlueSCSI-toolbox-Amiga
+
+
+Requirements
+------------
+
+ - BlueSCSI V2 or ZuluSCSI.
+ - AmigaOS 3.1 or later.
+ - CDChanger and SDTransfer need the ReAction classes, version 42 or newer
+   (window.class, layout.gadget, listbrowser.gadget, label.image, and
+   fuelgauge.gadget for SDTransfer). OS 3.2 and OS 3.5/3.9 include them.
+   BlueSCSIToolbox needs no extra classes.
+
+ZuluSCSI users must turn on the Toolbox. In zuluscsi.ini at the root of the
+SD card, add this line under the [SCSI] section:
+
+  EnableToolbox=1
+
+
+Installation
+------------
+
+Copy the BlueSCSI-Toolbox drawer wherever you like. Copy BlueSCSIToolbox to
+C: if you want to use it from any CLI.
+
+
+Choosing the device and unit
+----------------------------
+
+Every tool needs to know which SCSI device driver and unit (SCSI ID) to
+talk to. Use the ID of a drive that the BlueSCSI/ZuluSCSI is emulating.
+CDChanger needs the ID of an emulated CD-ROM drive.
+
+From Workbench, set the tooltypes in the icon (select it, then
+Icons > Information):
+
+  DEVICE=scsi.device
+  UNIT=1
+
+From the CLI, use the DEVICE and UNIT arguments:
+
+  CDChanger DEVICE=scsi.device UNIT=1
+
+The device name depends on your SCSI controller, for example scsi.device,
+2nd.scsi.device, gvpscsi.device or cybscsi.device.
+
+
+CDChanger
+---------
+
+Lists the CD images on the SD card for the chosen CD-ROM unit. Select one
+and the BlueSCSI/ZuluSCSI swaps the disc. CDChanger then tells the CD
+filesystem that the disc has changed, so the new volume appears on
+Workbench.
+
+
+SDTransfer
+----------
+
+Lists the files in the Toolbox shared folder on the SD card. Select a file
+to copy it to the Amiga. A file requester asks where to save it, and a
+gauge shows the progress.
+
+
+BlueSCSIToolbox
+---------------
+
+Template:
+
+  DEVICE/K,UNIT/K/N,DIR=LIST/S,SEND/K,RECEIVE/K,LISTDEVICES/S,LISTCDS/S,
+  SETCD/K/N,SETDEBUG/K/N,INFO/S,GETWORKINGDIR/S
+
+DEVICE is required. UNIT defaults to 0. Give one command per run.
+
+  DIR or LIST     List the files in the shared folder on the SD card.
+  SEND file       Copy a file from the Amiga to the shared folder.
+  RECEIVE file    Copy a file from the shared folder to the Amiga. Give a
+                  path (e.g. RAM:game.lha) to choose where it goes,
+                  otherwise it goes to the current directory.
+  LISTDEVICES     Show which SCSI IDs the BlueSCSI/ZuluSCSI emulates and
+                  their device types.
+  LISTCDS         List the CD images for this unit (CD-ROM units only).
+  SETCD n         Switch to CD image number n from LISTCDS (CD-ROM units
+                  only).
+  SETDEBUG n      Turn debug logging on the BlueSCSI/ZuluSCSI on (1) or
+                  off (0).
+  INFO            Show the Toolbox API version, capabilities and devices.
+  GETWORKINGDIR   Show the working directory on the SD card.
+
+Examples:
+
+  BlueSCSIToolbox DEVICE=scsi.device UNIT=1 LISTCDS
+  BlueSCSIToolbox DEVICE=scsi.device UNIT=1 SETCD 3
+  BlueSCSIToolbox DEVICE=scsi.device UNIT=2 SEND RAM:notes.txt
+  BlueSCSIToolbox DEVICE=scsi.device UNIT=2 RECEIVE RAM:game.lha
+
+
+History
+-------
+
+1.5 (9.11.2026)
+  Fix the CDChanger and SDTransfer window layout on Workbench 3.1.
+  New GETWORKINGDIR option for BlueSCSIToolbox.
+  All programs now share one version number.
+
+1.4 (14.8.2026)
+  Workbench 3.1 support.
+
+1.3 (8.8.2026)
+  Various fixes from Stefan Reinauer. 68000 support. Chip RAM fix for the
+  logo, and others.
+
+1.2c (18.6.2024)
+  Removed some OS 3.2 utility.library functions so that older OS versions
+  are supported.
+
+1.2 (18.5.2024)
+  ZuluSCSI support, added by Stefan Reinauer.
+
+1.1 (13.5.2024)
+  The SCSI command descriptor is now 10 bytes, not 6, as the Toolbox
+  developer docs specify. This may have crashed the SCSI stack when a
+  non-BlueSCSI device was selected.
+
+
+Credits
+-------
+
+Paul Hill            Author
+Stefan Reinauer      ZuluSCSI support, 68000 support and many fixes
+Daniel Lundqvist     SAS/C build support
+
+BlueSCSI is copyright Eric Helgeson. The BlueSCSI name and logo are used
+with permission.
+
+
+License
+-------
+
+GNU General Public License version 3. See LICENSE.txt.
