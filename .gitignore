@@ -3,6 +3,7 @@ src/BlueSCSIToolbox
 src/CDChanger
 src/SDTransfer
 dist/*
+aminet/build/
 devnotes.txt
 /.vs
 .backdrop

@@ -1,0 +1,2 @@
+# Aminet readme is read on the Amiga, so it must keep LF line endings
+aminet/*.readme text eol=lf
