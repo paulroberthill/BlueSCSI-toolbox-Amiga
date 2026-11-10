@@ -27,3 +27,5 @@ Thanks to Stefan Reinauer for adding support for the ZuluSCSI! (https://zuluscsi
 * 1.5 (09.11.2026) Fix the CD Changer and SD Transfer window layout on Workbench 3.1. New GETWORKINGDIR option for BlueSCSIToolbox. All programs now share one version number.
 
 BlueSCSI is copyright Eric Helgeson. The BlueSCSI name and logo used with permission.
+
+ZuluSCSI is a trademark of Rabbit Hole Computing LLC. The ZuluSCSI name and logo used with permission.
