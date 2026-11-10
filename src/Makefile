@@ -78,12 +78,15 @@ release:
 	$(CP) BlueSCSIToolbox $(DISTDIR)
 
 # Aminet release: stages the archive contents in ../aminet/build and packs
-# them into ../aminet/build/BlueSCSI-Toolbox.lha with LHa for UNIX (lha on
+# them into ../aminet/build/BlueSCSI-toolbox.lha with LHa for UNIX (lha on
 # the PATH). Upload the .lha and the .readme from ../aminet/build.
+# AMINETNAME matches the existing Aminet entry disk/misc/BlueSCSI-toolbox,
+# so new uploads replace it; the drawer in the archive is ARCNAME.
 # Note: the 2005 Windows lha.exe cannot list its own level 2 archives
 # ("Unknown level header"), but the archives are fine; check with 7z t.
 LHA       = lha
 ARCNAME   = BlueSCSI-Toolbox
+AMINETNAME = BlueSCSI-toolbox
 AMINETDIR = ..$(PATHSEP)aminet
 STAGEDIR  = $(AMINETDIR)$(PATHSEP)build
 ARCDIR    = $(STAGEDIR)$(PATHSEP)$(ARCNAME)
@@ -100,6 +103,6 @@ aminet: all
 	$(CP) $(AMINETDIR)$(PATHSEP)$(ARCNAME).readme $(ARCDIR)
 	$(foreach f,$(SRCFILES),$(CP) $(f) $(ARCSRCDIR) &&) echo Source copied
 	$(CP) $(AMINETDIR)$(PATHSEP)$(ARCNAME).info $(STAGEDIR)
-	cd $(STAGEDIR) && $(LHA) aq $(ARCNAME).lha $(ARCNAME) $(ARCNAME).info
-	$(CP) $(AMINETDIR)$(PATHSEP)$(ARCNAME).readme $(STAGEDIR)
+	cd $(STAGEDIR) && $(LHA) aq $(AMINETNAME).lha $(ARCNAME) $(ARCNAME).info
+	$(CP) $(AMINETDIR)$(PATHSEP)$(ARCNAME).readme $(STAGEDIR)$(PATHSEP)$(AMINETNAME).readme
 
