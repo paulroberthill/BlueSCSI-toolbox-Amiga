@@ -1,8 +1,9 @@
 Short:        BlueSCSI/ZuluSCSI CD changer & SD tools
 Author:       Paul Hill
 Uploader:     paul@codedbad.co.uk (Paul Hill)
-Type:         hard/misc
+Type:         disk/misc
 Version:      1.5
+Replaces:     disk/misc/BlueSCSI-toolbox.lha
 Architecture: m68k-amigaos >= 3.1.0
 Requires:     ReAction classes V42+ for the GUI tools
 Distribution: Aminet
